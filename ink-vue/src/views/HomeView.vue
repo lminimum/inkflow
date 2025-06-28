@@ -22,27 +22,27 @@
     <div class="card-container">
       <div class="nav-card card-color-1" @click="router.push('/ai-creation')">
         <i class="icon-brush"></i>
-        <h3>AI创作空间</h3>
+        <h3 style="color: #333">AI创作</h3>
       </div>
       <div class="nav-card card-color-2" @click="router.push('/add')">
         <i class="icon-add"></i>
-        <h3>内容管理</h3>
+        <h3 style="color: #333">增加账号</h3>
       </div>
       <div class="nav-card card-color-3" @click="router.push('/data-analysis')">
         <i class="icon-chart"></i>
-        <h3>数据分析</h3>
+        <h3 style="color: #333">数据分析</h3>
       </div>
       <div class="nav-card card-color-4" @click="router.push('/material')">
         <i class="icon-library"></i>
-        <h3>素材库</h3>
+        <h3 style="color: #333">素材库</h3>
       </div>
       <div class="nav-card card-color-5" @click="router.push('/settings')">
         <i class="icon-settings"></i>
-        <h3>系统设置</h3>
+        <h3 style="color: #333">系统设置</h3>
       </div>
       <div class="nav-card card-color-6" @click="router.push('/help')">
         <i class="icon-help"></i>
-        <h3>帮助中心</h3>
+        <h3 style="color: #333">帮助中心</h3>
       </div>
     </div>
 
