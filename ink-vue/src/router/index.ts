@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import ModelList from '../views/ModelList.vue';
 
 
 export default createRouter({
@@ -19,6 +20,11 @@ export default createRouter({
       path: '/add',
       component: () => import('@/views/AddView.vue'),
       meta: { title: '添加' }
+    },
+    {
+      path: '/models',
+      name: 'ModelList',
+      component: ModelList
     }
   ]
 });
