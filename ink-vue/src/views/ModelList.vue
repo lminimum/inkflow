@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { fetchModels } from "../services/api";
+import { fetchModels } from "../api/models";
 import type { Model } from "../types";
 
 const models = ref<Model[]>([]);
