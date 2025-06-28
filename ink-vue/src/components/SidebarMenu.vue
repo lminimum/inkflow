@@ -17,7 +17,6 @@
       <div v-if="showThemeSwitch" class="menu-item" @click="$emit('toggle-theme')">
         <component :is="isDark ? BulbOutlined : BulbFilled" :style="{fontSize: '24px'}"/>
       </div>
-      <div 
     </div>
   </nav>
 </template>
