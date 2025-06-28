@@ -1,17 +1,25 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
+// import { useRouter } from 'vue-router';
+// const router = useRouter();
 </script>
 
 <template>
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
+  <div class="layout-container">
+    <nav class="sidebar-menu">
+        <router-link to="/" class="menu-item" active-class="active-menu" exact>
+          <home-outlined :style="{fontSize: '24px', color: '#595959'}"/>
+        </router-link>
+        <router-link to="/ai-creation" class="menu-item" title="AI创作" active-class="active-menu">
+          <edit-outlined :style="{fontSize: '24px', color: '#595959'}"/>
+        </router-link>
+      <router-link to="/add" class="menu-item" title="添加" active-class="active-menu">
+        <plus-outlined :style="{fontSize: '24px', color: '#595959'}"/>
+      </router-link>
+    </nav>
+    <div class="main-content">
+      <router-view/>
+    </div>
   </div>
-  <HelloWorld msg="Vite + Vue" />
 </template>
 
 <style scoped>
