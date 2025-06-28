@@ -1,21 +1,51 @@
 <script setup lang="ts">
-// import { useRouter } from 'vue-router';
-// const router = useRouter();
+import { ref } from 'vue'
+import SidebarMenu from '@/components/SidebarMenu.vue'
+import { HomeOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons-vue'
+import { useRouter } from 'vue-router'
+
+// 导航项配置 - 移除label属性
+const topNavItems = [
+  { to: '/', icon: HomeOutlined },
+  { to: '/ai-creation', icon: EditOutlined },
+  { to: '/add', icon: PlusOutlined },
+]
+
+const openCreateDialog = () => {
+  console.log('打开新建创作对话框')
+}
+
+const addButton = {
+  icon: PlusOutlined,
+  handler: openCreateDialog
+}
+
+const router = useRouter()
+const isDark = ref(false)
+
+const handleNavClick = (item: { to?: string; handler?: () => void }) => {
+  if (item.to) {
+    router.push(item.to)
+  }
+  item.handler?.()
+}
+
+const toggleTheme = () => {
+  isDark.value = !isDark.value
+  document.documentElement.setAttribute('data-theme', isDark.value ? 'dark' : 'light')
+}
 </script>
 
 <template>
   <div class="layout-container">
-    <nav class="sidebar-menu">
-        <router-link to="/" class="menu-item" active-class="active-menu" exact>
-          <home-outlined :style="{fontSize: '24px', color: '#595959'}"/>
-        </router-link>
-        <router-link to="/ai-creation" class="menu-item" title="AI创作" active-class="active-menu">
-          <edit-outlined :style="{fontSize: '24px', color: '#595959'}"/>
-        </router-link>
-      <router-link to="/add" class="menu-item" title="添加" active-class="active-menu">
-        <plus-outlined :style="{fontSize: '24px', color: '#595959'}"/>
-      </router-link>
-    </nav>
+    <SidebarMenu 
+      :is-dark="isDark"
+      :top-items="topNavItems"
+      :add-button="addButton"
+      :show-theme-switch="true"
+      @toggle-theme="toggleTheme"
+      @item-click="handleNavClick"
+    />
     <div class="main-content">
       <router-view/>
     </div>
@@ -23,16 +53,10 @@
 </template>
 
 <style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
+.main-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  min-height: 100vh;
 }
 </style>

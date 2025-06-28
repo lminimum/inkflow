@@ -1,74 +1,101 @@
+/* 基础变量定义 */
+:root {
+  /* 主题色系统 */
+  --primary-color: #1677ff;
+  --primary-hover: #0050b3;
+  --primary-light: #e8f3ff;
+  --bg-color: #ffffff;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --border-color: #e8e8e8;
+  --hover-color: #f5f5f5;
+  --rank-bg: #f5f5f5;
+  --rank-color: #ff4d4f;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* 暗色主题变量 */
+:root[data-theme="dark"] {
+  --primary-color: #40a9ff;
+  --primary-hover: #096dd9;
+  --primary-light: #1d3653;
+  --bg-color: #141414;
+  --text-primary: #e8e8e8;
+  --text-secondary: #999999;
+  --border-color: #303030;
+  --hover-color: #272727;
+  --rank-bg: #272727;
+  --rank-color: #ff7a45;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* 全局样式重置 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  transition: background-color 0.3s, color 0.3s;
+}
+
 /* 卡片布局样式 */
 .card-container {
   display: flex;
   gap: 2rem;
   margin-bottom: 3rem;
+  flex-wrap: wrap;
 }
 
 .nav-card {
   flex: 1;
   min-width: 200px;
-  background: white;
+  background: var(--bg-color);
   border-radius: 12px;
   padding: 2rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  border: 1px solid var(--ink-gray);
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--border-color);
 }
 
 .nav-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
 }
 
 .nav-card h3 {
   margin-top: 1rem;
-  color: var(--ink-black);
+  color: var(--text-primary);
   font-size: 1.2rem;
 }
 
-:root {
-  --ink-black: #2d2d2d;
-  --ink-gray: #e0e0e0;
-  --ink-accent: #8c7ae6;
-}
-
-body {
-  font-family: 'Ma Shan Zheng', cursive;
-  background: linear-gradient(to bottom right, #f5f5f5 0%, #e0e0e0 100%);
-}
-
+/* 布局样式 */
 .layout-container {
   display: flex;
   min-height: 100vh;
 }
 
-.sidebar {
-  width: 50px;
-  min-width: 50px !important;
-  background: white;
-  box-shadow: 4px 0 15px rgba(0,0,0,0.1);
-  padding: 2rem;
-  border-right: 2px solid var(--ink-black);
+.main-content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
 }
 
-.menu-item {
-  display: flex;
-  align-items: center;
-  padding: 1rem;
-  margin: 1rem 0;
-  color: var(--ink-black);
-  text-decoration: none;
-  transition: all 0.3s ease;
-  border-radius: 4px;
+/* 通用组件样式 */
+.ink-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
 }
 
-.menu-item:hover {
-  background: var(--ink-gray);
-  transform: translateX(5px);
-}
-
+/* 图标样式 */
 .icon-brush::before {
   content: '✍️';
   margin-right: 1rem;
@@ -77,6 +104,21 @@ body {
 .icon-add::before {
   content: '➕';
   margin-right: 1rem;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .card-container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 60px !important;
+  }
+
+  .menu-label, .section-title, .hot-title {
+    display: none;
+  }
 }
 
 .icon-home {
