@@ -11,15 +11,6 @@ const topNavItems = [
   { to: '/add', icon: PlusOutlined },
 ]
 
-const openCreateDialog = () => {
-  console.log('打开新建创作对话框')
-}
-
-const addButton = {
-  icon: PlusOutlined,
-  handler: openCreateDialog
-}
-
 const router = useRouter()
 const isDark = ref(false)
 
@@ -41,7 +32,6 @@ const toggleTheme = () => {
     <SidebarMenu 
       :is-dark="isDark"
       :top-items="topNavItems"
-      :add-button="addButton"
       :show-theme-switch="true"
       @toggle-theme="toggleTheme"
       @item-click="handleNavClick"

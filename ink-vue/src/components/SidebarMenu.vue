@@ -18,12 +18,6 @@
         <component :is="isDark ? BulbOutlined : BulbFilled" :style="{fontSize: '24px'}"/>
       </div>
       <div 
-        class="menu-item add-btn"
-        @click="addButton && handleClick(addButton)"
-        title="新建创作"
-      >
-        <PlusOutlined :style="{ fontSize: '24px' }"/>
-      </div>
     </div>
   </nav>
 </template>
@@ -31,7 +25,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { PlusOutlined, BulbFilled, BulbOutlined,MoonOutlined } from '@ant-design/icons-vue';
+import { BulbFilled, BulbOutlined } from '@ant-design/icons-vue';
 
 export interface NavigationItem {
   to?: string;
