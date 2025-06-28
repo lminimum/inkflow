@@ -1,22 +1,46 @@
-<script setup lang="ts">
+<template>
+  <div class="layout-container">
+    <SidebarMenu
+      :is-dark="isDark"
+      :top-items="topNavItems"
+      @item-click="handleNavClick"
+      :on-setting-click="showThemeSettings"
+    />
+    <div class="main-content">
+      <router-view />
+    </div>
+    <ThemeSettings
+      :open="themeSettingsOpen"
+      @close="handleThemeSettingsClose"
+    />
+  </div>
+</template>
+
+<script lang="ts" setup>
 import { ref } from "vue";
+import { useRouter } from "vue-router";
 import SidebarMenu from "@/components/SidebarMenu.vue";
 import {
+  SettingOutlined,
   HomeOutlined,
   EditOutlined,
-  PlusOutlined,
+  DatabaseOutlined,
 } from "@ant-design/icons-vue";
-import { useRouter } from "vue-router";
+import ThemeSettings from "@/components/ThemeSettings.vue";
+const isDark = ref(false);
+const showThemeSettings = () => {
+  themeSettingsOpen.value = true;
+};
 
-// 导航项配置 - 移除label属性
+// 导航项配置
 const topNavItems = [
   { to: "/", icon: HomeOutlined },
   { to: "/ai-creation", icon: EditOutlined },
-  { to: "/add", icon: PlusOutlined },
+  { to: "/models", icon: DatabaseOutlined },
 ];
 
 const router = useRouter();
-const isDark = ref(false);
+const themeSettingsOpen = ref(false);
 
 const handleNavClick = (item: { to?: string; handler?: () => void }) => {
   if (item.to) {
@@ -25,41 +49,37 @@ const handleNavClick = (item: { to?: string; handler?: () => void }) => {
   item.handler?.();
 };
 
-const toggleTheme = () => {
-  isDark.value = !isDark.value;
-  document.documentElement.setAttribute(
-    "data-theme",
-    isDark.value ? "dark" : "light"
-  );
+const handleThemeSettingsClose = () => {
+  themeSettingsOpen.value = false;
 };
 </script>
 
-<template>
-  <div class="layout-container">
-    <SidebarMenu
-      :is-dark="isDark"
-      :top-items="topNavItems"
-      :show-theme-switch="true"
-      @toggle-theme="toggleTheme"
-      @item-click="handleNavClick"
-    />
-    <div class="main-content">
-      <router-view />
-    </div>
-  </div>
-</template>
-
 <style scoped>
+.layout-container {
+  display: flex;
+  height: 100vh;
+}
+
 .sidebar {
+  width: 80px;
+  height: 100vh;
   position: fixed;
   left: 0;
   top: 0;
-  height: 100vh;
   z-index: 100;
 }
 
 .main-content {
   margin-left: 80px;
   padding: 20px;
+  flex: 1;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
 }
 </style>

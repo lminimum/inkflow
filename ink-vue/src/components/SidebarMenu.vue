@@ -2,29 +2,29 @@
   <nav class="sidebar">
     <!-- 导航图标区域 -->
     <template v-for="item in topItems" :key="item.to || JSON.stringify(item)">
-      <div 
-        class="menu-item" 
-        :class="{ 'active': currentRoute === item.to }"
+      <div
+        class="menu-item"
+        :class="{ active: currentRoute === item.to }"
         @click="handleClick(item)"
         title="{{ item.to === '/' ? '首页' : 'AI创作' }}"
       >
-        <component :is="item.icon" :style="{fontSize: '24px'}"/>
+        <component :is="item.icon" :style="{ fontSize: '24px' }" />
       </div>
     </template>
 
     <!-- 底部功能按钮 -->
     <div class="bottom-section">
-      <div v-if="showThemeSwitch" class="menu-item" @click="$emit('toggle-theme')">
-        <component :is="isDark ? BulbOutlined : BulbFilled" :style="{fontSize: '24px'}"/>
+      <div class="menu-item" @click="handleSettingClick">
+        <component :is="SettingOutlined" :style="{ fontSize: '24px' }" />
       </div>
     </div>
   </nav>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useRoute } from 'vue-router';
-import { BulbFilled, BulbOutlined } from '@ant-design/icons-vue';
+import { computed } from "vue";
+import { useRoute } from "vue-router";
+import { SettingOutlined } from "@ant-design/icons-vue";
 
 export interface NavigationItem {
   to?: string;
@@ -32,24 +32,28 @@ export interface NavigationItem {
   handler?: () => void;
 }
 
-defineProps<{
+const props = defineProps<{
   isDark: boolean;
   topItems?: NavigationItem[];
   addButton?: NavigationItem;
-  showThemeSwitch?: boolean;
+  onSettingClick?: () => void;
 }>();
 
 // Define emits properly
-const emit = defineEmits(['itemClick', 'toggle-theme']);
+const emit = defineEmits(["itemClick"]);
 
 const route = useRoute();
 const currentRoute = computed(() => route.path);
 
 const handleClick = (item: NavigationItem) => {
   if (item.to) {
-    emit('itemClick', item);
+    emit("itemClick", item);
   }
   item.handler?.();
+};
+
+const handleSettingClick = () => {
+  props.onSettingClick?.();
 };
 </script>
 
