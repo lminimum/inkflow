@@ -14,81 +14,123 @@
 
     <!-- 主内容区 -->
     <div class="main-content">
-      <!-- 左侧输入区 -->
-      <div class="input-section">
-        <div class="input-group">
-          <label>请输入文章标题（2~30个字）</label>
-          <input type="text" placeholder="请输入文章标题" class="title-input" />
-          <span class="char-count">0/30</span>
+      <!-- 左侧展示界面 -->
+      <div class="display-section">
+        <div class="display-header">
+          <h2>{{ generatedTitle || "生成内容预览" }}</h2>
+          <div class="display-actions">
+            <button class="action-btn" @click="copyContent">
+              <i class="icon-copy"></i> 复制
+            </button>
+            <button class="action-btn" @click="editContent">
+              <i class="icon-edit"></i> 编辑
+            </button>
+          </div>
         </div>
+        <div
+          class="display-content"
+          v-if="generatedContent"
+          v-html="generatedContent"
+        ></div>
+        <p v-else class="empty-hint">AI生成的内容将显示在这里...</p>
+        >
+      </div>
 
-        <div class="input-group">
-          <label>请输入创作主题、观点</label>
+      <!-- 右侧AI对话区 -->
+      <div class="chat-section">
+        <div class="chat-header">
+          <h3>AI助手</h3>
+          <button class="clear-btn" @click="clearChat">
+            <i class="icon-clear"></i>
+          </button>
+        </div>
+        <div class="chat-messages">
+          <div
+            class="message ai-message"
+            v-for="(msg, index) in messages"
+            :key="index"
+          >
+            <div class="message-avatar"><i class="icon-ai"></i></div>
+            <div class="message-content">{{ msg.content }}</div>
+          </div>
+          <div class="typing-indicator" v-if="isGenerating">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+        </div>
+        <div class="chat-input">
           <textarea
-            placeholder="请输入创作主题、观点..."
-            class="content-input"
+            v-model="userInput"
+            placeholder="请输入您的创作需求或问题..."
+            @keydown.enter.prevent="handleGenerate"
           ></textarea>
-          <span class="char-count">0/500</span>
+          <button
+            class="send-btn"
+            @click="handleGenerate"
+            :disabled="!userInput.trim() || isGenerating"
+          >
+            <i class="icon-send"></i>
+          </button>
         </div>
       </div>
-
-      <!-- 右侧设置区 -->
-      <div class="settings-section">
-        <div class="model-selector">
-          <label>模型选择</label>
-          <select class="model-select">
-            <option>DeepSeek-R1</option>
-            <option>其他模型1</option>
-            <option>其他模型2</option>
-          </select>
-        </div>
-
-        <div class="setting-group">
-          <label>风格</label>
-          <select class="style-select">
-            <option>不限定类型</option>
-            <option>正式</option>
-            <option>轻松</option>
-            <option>专业</option>
-          </select>
-        </div>
-
-        <div class="setting-group">
-          <label>用词</label>
-          <select class="wording-select">
-            <option>不限定风格</option>
-            <option>通俗</option>
-            <option>华丽</option>
-            <option>简洁</option>
-          </select>
-        </div>
-
-        <div class="setting-group">
-          <label>字数</label>
-          <select class="word-count-select">
-            <option>1000字以内</option>
-            <option>1000-2000字</option>
-            <option>2000-3000字</option>
-            <option>3000字以上</option>
-          </select>
-        </div>
-
-        <button class="generate-btn">开始创作</button>
-      </div>
-    </div>
-
-    <!-- 底部操作栏 -->
-    <div class="bottom-actions">
-      <button class="action-btn">实时全文</button>
-      <button class="action-btn">存草稿</button>
-      <button class="action-btn">预览</button>
-      <button class="primary-btn">生成原创内容</button>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted } from "vue";
+<script setup lang="ts">
+import { ref } from "vue";
+import { generateContent } from "../api/generate";
+
+// 生成内容状态
+const generatedTitle = ref("");
+const generatedContent = ref("");
+const isGenerating = ref(false);
+
+// 对话状态
+const messages = ref([
+  {
+    content:
+      "您好！我可以帮您创作内容。请告诉我您的主题或需求，我会生成相应的文本并可以根据您的反馈进行修改。",
+  },
+]);
+const userInput = ref("");
+
+const handleGenerate = async () => {
+  isGenerating.value = true;
+  const response = await generateContent(userInput.value);
+  // 更新生成内容和AI回复
+  generatedContent.value = response.content;
+  // if (response.title) generatedTitle.value = response.title;
+  // if (response.content) generatedContent.value = response.content;
+  // 假设实际属性名可能需要根据 GenerateResponse 类型调整，这里假设正确属性名为 aiResponse
+  if (response.content) {
+    messages.value.push({ content: response.content });
+  }
+};
+
+// 复制内容到剪贴板
+const copyContent = () => {
+  if (!generatedContent.value) return;
+  navigator.clipboard.writeText(generatedContent.value);
+  alert("内容已复制到剪贴板");
+};
+
+// 清空对话
+const clearChat = () => {
+  messages.value = [
+    {
+      content:
+        "您好！我可以帮您创作内容。请告诉我您的主题或需求，我会生成相应的文本并可以根据您的反馈进行修改。",
+    },
+  ];
+};
+
+// 编辑内容
+const editContent = () => {
+  // 可以在这里实现编辑功能
+  alert("编辑功能待实现");
+};
 
 // 字数统计功能
 const titleInput = ref("");
@@ -103,10 +145,237 @@ const updateContentCount = () =>
 
 // 选项卡切换功能
 const activeTab = ref(0);
-const switchTab = (index) => (activeTab.value = index);
+const switchTab = (index: number) => (activeTab.value = index);
 </script>
 
 <style scoped>
+.ai-creation-container {
+  padding: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 顶部导航 */
+.top-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.nav-tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+.tab {
+  padding: 0.5rem 1.5rem;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px 4px 0 0;
+  cursor: pointer;
+}
+.tab.active {
+  background: var(--primary-light);
+  color: var(--primary-color);
+  border-bottom-color: transparent;
+}
+.toolbar {
+  display: flex;
+  gap: 1rem;
+}
+.toolbar-btn {
+  padding: 0.4rem 0.8rem;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* 主内容区 */
+.main-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* 左侧展示区 */
+.display-section {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.display-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-color);
+}
+.display-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.display-content {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+  background: white;
+  line-height: 1.6;
+}
+.empty-hint {
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: 2rem;
+  font-style: italic;
+}
+
+/* 右侧对话区 */
+.chat-section {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-color);
+}
+.clear-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+.chat-messages {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: var(--bg-color);
+}
+.message {
+  display: flex;
+  gap: 0.8rem;
+  max-width: 85%;
+}
+.ai-message {
+  align-self: flex-start;
+}
+.user-message {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+.message-avatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.user-message .message-avatar {
+  background: var(--secondary-color);
+}
+.message-content {
+  padding: 0.8rem 1.2rem;
+  border-radius: 18px;
+  background: white;
+  border: 1px solid var(--border-color);
+}
+.user-message .message-content {
+  background: var(--primary-light);
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+.chat-input {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+.chat-input textarea {
+  flex: 1;
+  padding: 0.8rem;
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  resize: none;
+  min-height: 4rem;
+  max-height: 10rem;
+}
+.send-btn {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  cursor: pointer;
+  align-self: flex-end;
+}
+.send-btn:disabled {
+  background: var(--border-color);
+  cursor: not-allowed;
+}
+
+/* 打字指示器 */
+.typing-indicator {
+  display: flex;
+  gap: 0.3rem;
+  padding: 0.8rem;
+}
+.dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  animation: typing 1.4s infinite both;
+}
+.dot:nth-child(1) {
+  animation-delay: 0s;
+}
+.dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-5px);
+  }
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .main-content {
+    grid-template-columns: 1fr;
+  }
+}
 .ai-creation-container {
   padding: 1.5rem;
   max-width: 1200px;

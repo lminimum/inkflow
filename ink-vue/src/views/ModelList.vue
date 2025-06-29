@@ -4,10 +4,21 @@
     <div v-if="loading" class="loading">加载中...</div>
     <div v-if="error" class="error">{{ error }}</div>
     <div class="model-grid" v-else>
-      <div class="model-card" v-for="model in models" :key="model.id">
-        <h3>{{ model.id }}</h3>
-        <p>拥有者: {{ model.owned_by }}</p>
-        <p>创建时间: {{ new Date(model.created * 1000).toLocaleString() }}</p>
+      <div
+        v-for="serviceGroup in models"
+        :key="serviceGroup.service"
+        class="service-section"
+      >
+        <h2>{{ serviceGroup.service }}</h2>
+        <div class="model-grid">
+          <div
+            class="model-card"
+            v-for="model in serviceGroup.models"
+            :key="model"
+          >
+            <h3>{{ model }}</h3>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -16,16 +27,17 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { fetchModels } from "../api/models";
-import type { Model } from "../types";
-
-const models = ref<Model[]>([]);
+const models = ref<Array<{ service: string; models: string[] }>>([]);
 const loading = ref(true);
 const error = ref("");
 
 onMounted(async () => {
   try {
     const response = await fetchModels();
-    models.value = response.data;
+    models.value = Object.entries(response).map(([service, modelNames]) => ({
+      service,
+      models: modelNames,
+    }));
   } catch (err) {
     error.value = "获取模型列表失败，请稍后重试";
     console.error(err);

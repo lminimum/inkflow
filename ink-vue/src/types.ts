@@ -5,14 +5,12 @@ export interface NavigationItem {
   handler?: () => void
 }
 
-export interface Model {
-  id: string;
-  object: string;
-  created: number;
-  owned_by: string;
+export interface ModelListResponse {
+  [service: string]: string[];
 }
 
-export interface ModelListResponse {
-  object: string;
-  data: Model[];
+export interface GenerateResponse {
+  content: string;
+  model?: string;
+  timestamp?: number;
 }

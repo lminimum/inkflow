@@ -3,4 +3,5 @@ uvicorn[standard]
 langchain
 python-dotenv
 openai
-langchain-ollama
+langchain-ollamaest
+pytest

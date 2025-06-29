@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from langchain_ollama import OllamaLLM
+from ai_providers import AIProviderFactory, AIProvider
 import requests
 from dotenv import load_dotenv
 
@@ -21,13 +21,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Ollama配置
-OLLAMA_BASE_URL = "https://ollama.campus.lk233.link/"
-
 # 请求模型定义
 class GenerateRequest(BaseModel):
     prompt: str
     model: str
+    service: str = 'ollama'
 
 @app.get("/")
 async def read_root():
@@ -35,12 +33,9 @@ async def read_root():
 
 @app.get("/api/models")
 async def get_models():
-    try:
-        response = requests.get(f"{OLLAMA_BASE_URL}v1/models")
-        response.raise_for_status()
-        return response.json()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch models list: {str(e)}")
+    config = AIProviderFactory.load_config()
+    services = config.get('services', [])
+    return {service['name']: service['models'] for service in services}
 
 @app.post("/api/generate")
 async def generate_content(request: GenerateRequest):
@@ -48,15 +43,11 @@ async def generate_content(request: GenerateRequest):
         raise HTTPException(status_code=400, detail="Prompt and model are required")
 
     try:
-        # 初始化Ollama模型
-        llm = OllamaLLM(
-            base_url=OLLAMA_BASE_URL,
-            model=request.model,
-            timeout=30
-        )
-
+        # 获取AI服务提供商
+        provider = AIProviderFactory.get_provider(request.service)
+        
         # 调用模型生成内容
-        result = llm.invoke(request.prompt)
+        result = provider.generate_content(request.prompt, request.model)
         return {"content": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate content: {str(e)}")
