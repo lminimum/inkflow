@@ -1,7 +1,9 @@
-fastapi==0.115.14
-uvicorn[standard]==0.31.0
+fastapi
+uvicorn[standard]
 langchain
-python-dotenv==1.0.1
-openai==1.40.0
-langchain-ollama==0.1.0
-pytest==8.4.1
+python-dotenv
+openai
+langchain-ollama
+pytest
+langchain_community
+langchain_openai

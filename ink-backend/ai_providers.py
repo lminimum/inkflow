@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 from fastapi import HTTPException
 import os
 import json
-import requests
-from openai import OpenAI, AuthenticationError, APIError
+from openai import AuthenticationError, APIError
 from langchain_ollama import OllamaLLM
+from langchain_openai import ChatOpenAI
 
 class AIProvider(ABC):
     @abstractmethod
@@ -31,7 +31,7 @@ class OllamaProvider(AIProvider):
             )
             return llm.invoke(prompt)
         except Exception as e:
-            raise ValueError(f"Ollama API error: {str(e)}")
+            raise ValueError(f"Ollama API error: {str(e)}. Check if base_url '{self.base_url}' and model '{model}' are correct.")
 
 class DeepSeekProvider(AIProvider):
     def __init__(self, config):
@@ -39,9 +39,10 @@ class DeepSeekProvider(AIProvider):
         self.api_key = os.getenv('DEEPSEEK_API_KEY')
         if not self.api_key:
             raise ValueError("DEEPSEEK_API_KEY environment variable not set")
-        self.client = OpenAI(
+        self.client = ChatOpenAI(
             api_key=self.api_key,
-            base_url=config['base_url']
+            openai_api_base=config['base_url'],
+            temperature=0.7
         )
 
     def generate_content(self, messages: list, model: str) -> str:
@@ -49,12 +50,8 @@ class DeepSeekProvider(AIProvider):
             raise ValueError(f"Model {model} not supported by DeepSeek provider")
 
         try:
-            response = self.client.chat.completions.create(
-                model=model,
-                messages=messages,
-                temperature=0.7
-            )
-            return response.choices[0].message.content
+            response = self.client.invoke(messages, model=model)
+            return response.content
         except AuthenticationError as e:
             raise HTTPException(status_code=401, detail=f"DeepSeek authentication failed: {str(e)}")
         except APIError as e:
@@ -69,39 +66,59 @@ class SiliconFlowProvider(AIProvider):
         self.api_key = os.getenv('SILICONFLOW_API_KEY')
         if not self.api_key:
             raise ValueError("SILICONFLOW_API_KEY environment variable not set")
+        self.client = ChatOpenAI(
+            api_key=self.api_key,
+            openai_api_base=self.base_url,
+            temperature=0.7
+        )
 
     def generate_content(self, messages: list, model: str) -> str:
         if model not in self.models:
             raise ValueError(f"Model {model} not supported by SiliconFlow provider")
 
-        headers = {
-            'Content-Type': 'application/json',
-            'Authorization': f'Bearer {self.api_key}'
-        }
+        try:
+            response = self.client.invoke(messages, model=model)
+            return response.content
+        except AuthenticationError as e:
+            raise HTTPException(status_code=401, detail=f"SiliconFlow authentication failed: {str(e)}")
+        except APIError as e:
+            raise HTTPException(status_code=500, detail=f"SiliconFlow API error: {str(e)}")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Unexpected error with SiliconFlow: {str(e)}")
 
-        payload = {
-            'model': model,
-            'messages': messages,
-            'temperature': 0.7
-        }
+class AliyunBailianProvider(AIProvider):
+    def __init__(self, config):
+        self.models = config['models']
+        self.api_key = os.getenv('ALIBABA_BAILIAN_API_KEY')
+        if not self.api_key:
+            raise ValueError("ALIBABA_BAILIAN_API_KEY environment variable not set")
+        self.client = ChatOpenAI(
+            api_key=self.api_key,
+            openai_api_base=config['base_url'],
+            temperature=0.7
+        )
+
+    def generate_content(self, messages: list, model: str) -> str:
+        if model not in self.models:
+            raise ValueError(f"Model {model} not supported by Aliyun Bailian provider")
 
         try:
-            response = requests.post(self.base_url, headers=headers, json=payload)
-            response.raise_for_status()
-            return response.json()['choices'][0]['message']['content']
-        except requests.exceptions.HTTPError as e:
-            error_detail = response.json().get('detail', str(e))
-            raise ValueError(f"SiliconFlow API error: {error_detail}")
-        except requests.exceptions.RequestException as e:
-            raise ValueError(f"SiliconFlow request failed: {str(e)}")
-        except KeyError as e:
-            raise ValueError(f"Invalid response format from SiliconFlow: {str(e)}")
+            response = self.client.invoke(messages, model=model)
+            return response.content
+        except AuthenticationError as e:
+            raise HTTPException(status_code=401, detail=f"Aliyun Bailian authentication failed: {str(e)}")
+        except APIError as e:
+            raise HTTPException(status_code=500, detail=f"Aliyun Bailian API error: {str(e)}")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Unexpected error with Aliyun Bailian: {str(e)}")
+
 
 class AIProviderFactory:
     _providers = {
         'ollama': OllamaProvider,
         'deepseek': DeepSeekProvider,
-        'siliconflow': SiliconFlowProvider
+        'siliconflow': SiliconFlowProvider,
+        'aliyun_bailian': AliyunBailianProvider
     }
 
     @staticmethod

@@ -27,4 +27,10 @@ def test_generate_siliconflow():
         json={"messages": [{"role": "user", "content": "Hello"}], "model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B", "service": "siliconflow"}
     )
     assert response.status_code == 200
+
+def test_generate_aliyun_bailian():
+    response = client.post("/api/generate",
+        json={"messages": [{"role": "user", "content": "Hello"}], "model": "qwen-turbo", "service": "aliyun_bailian"}
+    )
+    assert response.status_code == 200
     assert "content" in response.json()
