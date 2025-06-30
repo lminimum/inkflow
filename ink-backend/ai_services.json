@@ -10,7 +10,7 @@
     {
       "name": "deepseek",
       "type": "deepseek",
-      "base_url": "https://api.deepseek.com/v1/chat/completions",
+      "base_url": "https://api.deepseek.com",
       "models": ["deepseek-chat", "deepseek-reasoner"],
       "api_key_required": true
     },

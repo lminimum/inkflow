@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+const API_BASE_URL = '/api';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -27,7 +27,7 @@ apiClient.interceptors.response.use(
   (error) => {
     console.error('API请求错误:', error);
     // 统一错误处理
-    const errorMessage = error.response?.data?.error || '请求失败，请稍后重试';
+    const errorMessage = error.response?.data?.detail || '请求失败，请稍后重试';
     return Promise.reject(new Error(errorMessage));
   }
 );

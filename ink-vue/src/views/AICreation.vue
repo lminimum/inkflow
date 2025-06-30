@@ -80,6 +80,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
+import type { Message } from "../types";
 import { generateContent } from "../api/generate";
 
 // 生成内容状态
@@ -88,8 +89,9 @@ const generatedContent = ref("");
 const isGenerating = ref(false);
 
 // 对话状态
-const messages = ref([
+const messages = ref<Message[]>([
   {
+    role: "assistant",
     content:
       "您好！我可以帮您创作内容。请告诉我您的主题或需求，我会生成相应的文本并可以根据您的反馈进行修改。",
   },
@@ -97,15 +99,32 @@ const messages = ref([
 const userInput = ref("");
 
 const handleGenerate = async () => {
+  if (!userInput.value.trim()) return;
+
+  // 添加用户消息
+  messages.value.push({ role: "user", content: userInput.value });
   isGenerating.value = true;
-  const response = await generateContent(userInput.value);
-  // 更新生成内容和AI回复
-  generatedContent.value = response.content;
-  // if (response.title) generatedTitle.value = response.title;
-  // if (response.content) generatedContent.value = response.content;
-  // 假设实际属性名可能需要根据 GenerateResponse 类型调整，这里假设正确属性名为 aiResponse
-  if (response.content) {
-    messages.value.push({ content: response.content });
+
+  try {
+    const response = await generateContent(
+      [{ role: "user", content: userInput.value }],
+      "deepseek-chat",
+      "deepseek"
+    );
+    const content = response.content.replace(/\n/g, "<br>");
+    generatedContent.value = content;
+    if (response.content) {
+      messages.value.push({ role: "assistant", content: response.content });
+    }
+    userInput.value = ""; // 清空输入
+  } catch (error) {
+    console.error("生成内容失败:", error);
+    messages.value.push({
+      role: "assistant",
+      content: "抱歉，生成内容时出错，请稍后再试。",
+    });
+  } finally {
+    isGenerating.value = false;
   }
 };
 
@@ -120,6 +139,7 @@ const copyContent = () => {
 const clearChat = () => {
   messages.value = [
     {
+      role: "assistant",
       content:
         "您好！我可以帮您创作内容。请告诉我您的主题或需求，我会生成相应的文本并可以根据您的反馈进行修改。",
     },
@@ -296,6 +316,7 @@ const switchTab = (index: number) => (activeTab.value = index);
   background: var(--secondary-color);
 }
 .message-content {
+  white-space: pre-line;
   padding: 0.8rem 1.2rem;
   border-radius: 18px;
   background: white;

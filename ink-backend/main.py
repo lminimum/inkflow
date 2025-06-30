@@ -1,7 +1,7 @@
 import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field,ConfigDict
 from ai_providers import AIProviderFactory, AIProvider
 import requests
 from dotenv import load_dotenv
@@ -22,10 +22,14 @@ app.add_middleware(
 )
 
 # 请求模型定义
+class Message(BaseModel):
+    role: str
+    content: str
+
 class GenerateRequest(BaseModel):
-    prompt: str
-    model: str
-    service: str = 'ollama'
+    messages: list[Message]
+    model: str = Field(default="llama3")
+    service: str = Field(default="ollama")
 
 @app.get("/")
 async def read_root():
@@ -39,18 +43,20 @@ async def get_models():
 
 @app.post("/api/generate")
 async def generate_content(request: GenerateRequest):
-    if not request.prompt or not request.model:
-        raise HTTPException(status_code=400, detail="Prompt and model are required")
+    if not request.messages or not request.model:
+        raise HTTPException(status_code=400, detail="Messages and model are required")
 
     try:
         # 获取AI服务提供商
         provider = AIProviderFactory.get_provider(request.service)
         
         # 调用模型生成内容
-        result = provider.generate_content(request.prompt, request.model)
-        return {"content": result}
+        content = provider.generate_content([msg.model_dump() for msg in request.messages], request.model)
+        return {"content": content}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to generate content: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate content: {type(e).__name__}: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
