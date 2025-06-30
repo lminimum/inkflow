@@ -21,30 +21,30 @@
       </div>
     </div>
 
-    <h2 class="section-title">特色功能</h2>
+    <h2 class="section-title">功能区域</h2>
     <div class="card-container">
       <div class="nav-card card-color-1" @click="router.push('/ai-creation')">
-        <i class="icon-brush"></i>
+        <EditOutlined />
         <h3 style="color: #333">AI创作</h3>
       </div>
       <div class="nav-card card-color-2" @click="router.push('/add')">
-        <i class="icon-add"></i>
+        <PlusOutlined />
         <h3 style="color: #333">增加账号</h3>
       </div>
       <div class="nav-card card-color-3" @click="router.push('/data-analysis')">
-        <i class="icon-chart"></i>
+        <BarChartOutlined />
         <h3 style="color: #333">数据分析</h3>
       </div>
       <div class="nav-card card-color-4" @click="router.push('/material')">
-        <i class="icon-library"></i>
+        <DatabaseOutlined />
         <h3 style="color: #333">素材库</h3>
       </div>
       <div class="nav-card card-color-5" @click="router.push('/settings')">
-        <i class="icon-settings"></i>
+        <SettingOutlined />
         <h3 style="color: #333">系统设置</h3>
       </div>
       <div class="nav-card card-color-6" @click="router.push('/help')">
-        <i class="icon-help"></i>
+        <QuestionCircleOutlined />
         <h3 style="color: #333">帮助中心</h3>
       </div>
     </div>
@@ -115,7 +115,14 @@
 <script setup>
 import { useRouter } from "vue-router";
 const router = useRouter();
-
+import {
+  EditOutlined,
+  PlusOutlined,
+  BarChartOutlined,
+  DatabaseOutlined,
+  SettingOutlined,
+  QuestionCircleOutlined,
+} from "@ant-design/icons-vue";
 // 热点话题数据
 // 实时爆文数据
 const realtimeArticles = [
@@ -156,7 +163,13 @@ const hotTopics = [
 
 <style scoped>
 .home-container {
-  padding: 2rem;
+  padding: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
 }
 
 .rankings-container {
@@ -395,7 +408,6 @@ const hotTopics = [
   color: var(--text-secondary);
 }
 
-/* 作者激励榜样式 */
 .ranking-section {
   margin-top: 3rem;
 }
@@ -470,9 +482,7 @@ const hotTopics = [
   font-weight: bold;
   color: #ff4d4f;
 }
-</style>
 
-<style scoped>
 .home-container {
   padding: 2rem;
 }
