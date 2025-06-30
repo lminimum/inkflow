@@ -28,7 +28,7 @@
           </div>
         </div>
         <div
-          class="display-content"
+          class="display-content markdown-content"
           v-if="generatedContent"
           v-html="generatedContent"
         ></div>
@@ -68,7 +68,10 @@
                 :is="msg.role === 'user' ? UserOutlined : RobotOutlined"
               />
             </div>
-            <div class="message-content">{{ msg.content }}</div>
+            <div
+              class="message-content markdown-content"
+              v-html="parseMarkdown(msg.content)"
+            ></div>
           </div>
           <div class="typing-indicator" v-if="isGenerating">
             <div class="dot"></div>
@@ -100,6 +103,7 @@ import { ref, onMounted } from "vue";
 import { useModelsStore } from "../store/modelsStore";
 import type { Message } from "../types";
 import { generateContent } from "../api/generate";
+import { marked } from "marked";
 import {
   UserOutlined,
   RobotOutlined,
@@ -110,6 +114,11 @@ import {
   EditOutlined,
   ClearOutlined,
 } from "@ant-design/icons-vue";
+
+// Markdown解析函数
+const parseMarkdown = (content: string) => {
+  return marked.parse(content);
+};
 
 // 生成内容状态
 const generatedTitle = ref("");
@@ -157,8 +166,8 @@ const handleGenerate = async () => {
       selectedModel.value,
       provider
     );
-    const content = response.content.replace(/\n/g, "<br>");
-    generatedContent.value = content;
+    // 使用marked解析Markdown内容
+    generatedContent.value = await marked.parse(response.content);
     if (response.content) {
       messages.value.push({ role: "assistant", content: response.content });
     }
@@ -500,25 +509,85 @@ const switchTab = (index: number) => (activeTab.value = index);
   border: none;
   cursor: pointer;
 }
-
 .send-btn:disabled {
   background-color: var(--border-color);
   cursor: not-allowed;
 }
 
-/* 调整图标大小和间距 */
-.anticon {
-  font-size: 16px;
+/* Markdown内容样式 */
+.markdown-content {
+  line-height: 1.6;
 }
 
-.message-avatar .anticon {
-  margin-right: 0;
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  margin: 1.5rem 0 1rem;
+  color: var(--text-primary);
 }
 
-/* 响应式调整 */
-@media (max-width: 768px) {
   .main-content {
     grid-template-columns: 1fr;
-  }
+.markdown-content p {
+  margin-bottom: 1rem;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.markdown-content ul {
+  list-style-type: disc;
+}
+
+.markdown-content ol {
+  list-style-type: decimal;
+}
+
+.markdown-content strong {
+  font-weight: bold;
+}
+
+.markdown-content em {
+  font-style: italic;
+}
+
+.markdown-content a {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+.markdown-content img {
+  max-width: 100%;
+  border-radius: 4px;
+  margin: 1rem 0;
+}
+
+.markdown-content code {
+  background-color: var(--bg-secondary);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.markdown-content pre {
+  background-color: var(--bg-secondary);
+  padding: 1rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.markdown-content blockquote {
+  border-left: 4px solid var(--border-color);
+  padding-left: 1rem;
+  margin-left: 0;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
 }
 </style>
