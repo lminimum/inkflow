@@ -529,8 +529,6 @@ const switchTab = (index: number) => (activeTab.value = index);
   color: var(--text-primary);
 }
 
-  .main-content {
-    grid-template-columns: 1fr;
 .markdown-content p {
   margin-bottom: 1rem;
 }
