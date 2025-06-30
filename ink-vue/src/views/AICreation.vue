@@ -41,9 +41,13 @@
           <h3>AI助手</h3>
           <div class="model-selector">
             <select v-model="selectedModel" class="model-select">
-              <option value="deepseek-chat">DeepSeek Chat</option>
-              <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-              <option value="gpt-4">GPT-4</option>
+              <option
+                v-for="model in modelsStore.modelOptions"
+                :key="model.value"
+                :value="model.value"
+              >
+                {{ model.label }}
+              </option>
             </select>
           </div>
           <button class="clear-btn" @click="clearChat">
@@ -92,7 +96,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
+import { useModelsStore } from "../store/modelsStore";
 import type { Message } from "../types";
 import { generateContent } from "../api/generate";
 import {
@@ -110,9 +115,20 @@ import {
 const generatedTitle = ref("");
 const generatedContent = ref("");
 const isGenerating = ref(false);
-const selectedModel = ref("deepseek-chat");
 
 // 对话状态
+const modelsStore = useModelsStore();
+const selectedModel = ref("");
+
+onMounted(() => {
+  modelsStore.loadModels().then(() => {
+    // 设置默认模型
+    if (modelsStore.modelOptions.length > 0) {
+      selectedModel.value = modelsStore.modelOptions[0].value;
+    }
+  });
+});
+
 const messages = ref<Message[]>([
   {
     role: "assistant",
@@ -130,10 +146,16 @@ const handleGenerate = async () => {
   isGenerating.value = true;
 
   try {
+    // 查找选中模型的提供商
+    const selectedOption = modelsStore.modelOptions.find(
+      (option) => option.value === selectedModel.value
+    );
+    const provider = selectedOption?.provider || "deepseek";
+
     const response = await generateContent(
       [{ role: "user", content: userInput.value }],
       selectedModel.value,
-      selectedModel.value.includes("gpt") ? "openai" : "deepseek"
+      provider
     );
     const content = response.content.replace(/\n/g, "<br>");
     generatedContent.value = content;
@@ -197,7 +219,7 @@ const switchTab = (index: number) => (activeTab.value = index);
   padding: 1.5rem;
   max-width: 1400px;
   margin: 0 auto;
-  height: 100vh;
+  height: calc(100vh - 60px);
   display: flex;
   flex-direction: column;
   background-color: var(--bg-color);
@@ -443,6 +465,8 @@ const switchTab = (index: number) => (activeTab.value = index);
 /* 输入区样式 */
 .chat-input {
   display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   padding: 1rem;
   border-top: 1px solid var(--border-color);
@@ -464,15 +488,17 @@ const switchTab = (index: number) => (activeTab.value = index);
 
 /* 发送按钮样式 */
 .send-btn {
-  min-width: 4rem;
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
+  width: 2rem;
+  height: 2rem;
   border-radius: 50%;
-  padding: 1rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: var(--primary-color);
+  color: var(--text-primary);
+  border: none;
   cursor: pointer;
-  transition: background-color 0.2s;
-  resize: vertical;
 }
 
 .send-btn:disabled {
@@ -483,7 +509,6 @@ const switchTab = (index: number) => (activeTab.value = index);
 /* 调整图标大小和间距 */
 .anticon {
   font-size: 16px;
-  margin-right: 4px;
 }
 
 .message-avatar .anticon {

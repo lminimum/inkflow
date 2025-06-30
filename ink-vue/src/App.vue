@@ -61,8 +61,6 @@ const handleThemeSettingsClose = () => {
 }
 
 .sidebar {
-  width: 80px;
-  height: 100vh;
   position: fixed;
   left: 0;
   top: 0;
@@ -70,7 +68,7 @@ const handleThemeSettingsClose = () => {
 }
 
 .main-content {
-  margin-left: 80px;
+  margin-left: 60px;
   padding: 20px;
   flex: 1;
 }
