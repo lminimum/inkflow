@@ -5,6 +5,7 @@
   --primary-hover: #0050b3;
   --primary-light: #e8f3ff;
   --bg-color: #ffffff;
+  --card-bg: #e8f3ff;
   --text-primary: #333333;
   --text-secondary: #666666;
   --border-color: #e8e8e8;
@@ -18,11 +19,12 @@
 :root[data-theme="dark"] {
   --primary-color: #40a9ff;
   --primary-hover: #096dd9;
-  --primary-light: #1d3653;
+  --primary-light: #0d1117;
   --bg-color: #303030;
+  --card-bg: #161b22;
   --text-primary: #e8e8e8;
   --text-secondary: #999999;
-  --border-color: #292929;
+  --border-color: #a9a9a96f;
   --hover-color: #272727;
   --rank-bg: #272727;
   --rank-color: #ff7a45;

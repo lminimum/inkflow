@@ -2,13 +2,17 @@
   <a-drawer
     class="theme-settings-drawer"
     :width="300"
-    title="主题设置"
     :open="open"
     placement="right"
     @close="onClose"
     style="background-color: var(--bg-color)"
-    :title-style="titleStyle"
+    :close-icon="customCloseIcon"
   >
+    <template #title>
+      <span style="color: var(--text-primary); font-weight: bold"
+        >主题设置</span
+      >
+    </template>
     <div class="theme-setting-item">
       <h4>主题模式</h4>
       <a-radio-group v-model:value="themeMode" @change="handleThemeModeChange">
@@ -33,18 +37,24 @@
     </div>
 
     <template #extra>
-      <a-button @click="resetDefault">重置默认</a-button>
-      <a-button type="primary" @click="onClose" style="margin-left: 8px"
-        >保存</a-button
+      <a-button
+        @click="resetDefault"
+        style="color: var(--text-primary); background-color: var(--bg-color)"
+        >重置默认</a-button
       >
     </template>
   </a-drawer>
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted } from "vue";
 import { message } from "ant-design-vue";
+import { CloseOutlined } from "@ant-design/icons-vue";
 
+import { h } from "vue";
+const customCloseIcon = h(CloseOutlined, {
+  style: { color: "var(--text-primary)", fontSize: "18px" },
+});
 // 预设主题颜色选项
 const colorOptions = [
   { value: "#1677ff", name: "蓝色" },
@@ -197,22 +207,9 @@ const resetDefault = () => {
   applyThemeSettings();
   saveThemeSettings();
 };
-
-const titleStyle = computed(() => {
-  const rootStyle = getComputedStyle(document.documentElement);
-  return {
-    color: rootStyle.getPropertyValue("--text-primary"),
-  };
-});
 </script>
 
 <style scoped>
-:deep(.ant-drawer-content) {
-  background-color: var(--bg-color) !important;
-}
-
-:deep(.ant-drawer-header-title),
-:deep(.ant-drawer-body),
 :deep(.ant-radio-wrapper),
 :deep(.theme-setting-item h4) {
   color: var(--text-primary) !important;

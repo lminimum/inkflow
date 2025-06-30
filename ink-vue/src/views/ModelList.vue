@@ -73,7 +73,7 @@ onMounted(async () => {
 }
 
 .model-card {
-  background: #fff;
+  background: var(--card-bg);
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   padding: 16px;
@@ -86,7 +86,7 @@ onMounted(async () => {
 
 .model-card h3 {
   margin: 0 0 10px 0;
-  color: #1890ff;
+  color: var(--text-primary);
   font-size: 18px;
 }
 

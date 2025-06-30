@@ -1,5 +1,8 @@
 <template>
   <div class="home-container">
+    <div class="home-header">
+      <h1>主页</h1>
+    </div>
     <div class="stats-card-container">
       <div class="nav-card">
         <i class="icon-file-text"></i>
