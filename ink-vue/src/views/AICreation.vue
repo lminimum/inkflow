@@ -7,8 +7,8 @@
         <div class="tab">AI改写</div>
       </div>
       <div class="toolbar">
-        <button class="toolbar-btn"><i class="icon-save"></i> 保存</button>
-        <button class="toolbar-btn"><i class="icon-export"></i> 导出</button>
+        <button class="toolbar-btn"><SaveOutlined /> 保存</button>
+        <button class="toolbar-btn"><ExportOutlined /> 导出</button>
       </div>
     </div>
 
@@ -20,10 +20,10 @@
           <h2>{{ generatedTitle || "生成内容预览" }}</h2>
           <div class="display-actions">
             <button class="action-btn" @click="copyContent">
-              <i class="icon-copy"></i> 复制
+              <CopyOutlined /> 复制
             </button>
             <button class="action-btn" @click="editContent">
-              <i class="icon-edit"></i> 编辑
+              <EditOutlined /> 编辑
             </button>
           </div>
         </div>
@@ -33,24 +33,37 @@
           v-html="generatedContent"
         ></div>
         <p v-else class="empty-hint">AI生成的内容将显示在这里...</p>
-        >
       </div>
 
       <!-- 右侧AI对话区 -->
       <div class="chat-section">
         <div class="chat-header">
           <h3>AI助手</h3>
+          <div class="model-selector">
+            <select v-model="selectedModel" class="model-select">
+              <option value="deepseek-chat">DeepSeek Chat</option>
+              <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+              <option value="gpt-4">GPT-4</option>
+            </select>
+          </div>
           <button class="clear-btn" @click="clearChat">
-            <i class="icon-clear"></i>
+            <ClearOutlined />
           </button>
         </div>
         <div class="chat-messages">
           <div
-            class="message ai-message"
+            :class="[
+              'message',
+              msg.role === 'user' ? 'user-message' : 'ai-message',
+            ]"
             v-for="(msg, index) in messages"
             :key="index"
           >
-            <div class="message-avatar"><i class="icon-ai"></i></div>
+            <div class="message-avatar">
+              <component
+                :is="msg.role === 'user' ? UserOutlined : RobotOutlined"
+              />
+            </div>
             <div class="message-content">{{ msg.content }}</div>
           </div>
           <div class="typing-indicator" v-if="isGenerating">
@@ -70,7 +83,7 @@
             @click="handleGenerate"
             :disabled="!userInput.trim() || isGenerating"
           >
-            <i class="icon-send"></i>
+            <SendOutlined />
           </button>
         </div>
       </div>
@@ -82,11 +95,22 @@
 import { ref } from "vue";
 import type { Message } from "../types";
 import { generateContent } from "../api/generate";
+import {
+  UserOutlined,
+  RobotOutlined,
+  SendOutlined,
+  SaveOutlined,
+  ExportOutlined,
+  CopyOutlined,
+  EditOutlined,
+  ClearOutlined,
+} from "@ant-design/icons-vue";
 
 // 生成内容状态
 const generatedTitle = ref("");
 const generatedContent = ref("");
 const isGenerating = ref(false);
+const selectedModel = ref("deepseek-chat");
 
 // 对话状态
 const messages = ref<Message[]>([
@@ -108,8 +132,8 @@ const handleGenerate = async () => {
   try {
     const response = await generateContent(
       [{ role: "user", content: userInput.value }],
-      "deepseek-chat",
-      "deepseek"
+      selectedModel.value,
+      selectedModel.value.includes("gpt") ? "openai" : "deepseek"
     );
     const content = response.content.replace(/\n/g, "<br>");
     generatedContent.value = content;
@@ -176,6 +200,8 @@ const switchTab = (index: number) => (activeTab.value = index);
   height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
 }
 
 /* 顶部导航 */
@@ -187,32 +213,44 @@ const switchTab = (index: number) => (activeTab.value = index);
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--border-color);
 }
+
 .nav-tabs {
   display: flex;
   gap: 0.5rem;
 }
+
 .tab {
   padding: 0.5rem 1.5rem;
   background: var(--bg-color);
   border: 1px solid var(--border-color);
   border-radius: 4px 4px 0 0;
   cursor: pointer;
+  color: var(--text-primary);
 }
+
 .tab.active {
   background: var(--primary-light);
   color: var(--primary-color);
   border-bottom-color: transparent;
 }
+
 .toolbar {
   display: flex;
   gap: 1rem;
 }
+
 .toolbar-btn {
   padding: 0.4rem 0.8rem;
   background: var(--bg-color);
   border: 1px solid var(--border-color);
   border-radius: 4px;
   cursor: pointer;
+  color: var(--text-primary);
+}
+
+/* 主题切换按钮 */
+.theme-toggle {
+  margin-left: 1rem;
 }
 
 /* 主内容区 */
@@ -231,7 +269,9 @@ const switchTab = (index: number) => (activeTab.value = index);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   overflow: hidden;
+  background-color: var(--bg-color);
 }
+
 .display-header {
   display: flex;
   justify-content: space-between;
@@ -240,17 +280,30 @@ const switchTab = (index: number) => (activeTab.value = index);
   border-bottom: 1px solid var(--border-color);
   background: var(--bg-color);
 }
+
 .display-actions {
   display: flex;
   gap: 0.5rem;
 }
+
+.action-btn {
+  padding: 0.6rem 1.2rem;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
 .display-content {
   flex: 1;
   padding: 1.5rem;
   overflow-y: auto;
-  background: white;
+  background: var(--bg-color);
   line-height: 1.6;
+  color: var(--text-primary);
 }
+
 .empty-hint {
   color: var(--text-secondary);
   text-align: center;
@@ -265,7 +318,9 @@ const switchTab = (index: number) => (activeTab.value = index);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   overflow: hidden;
+  background-color: var(--bg-color);
 }
+
 .chat-header {
   display: flex;
   justify-content: space-between;
@@ -274,87 +329,77 @@ const switchTab = (index: number) => (activeTab.value = index);
   border-bottom: 1px solid var(--border-color);
   background: var(--bg-color);
 }
+
 .clear-btn {
   background: none;
   border: none;
   cursor: pointer;
   color: var(--text-secondary);
 }
+
+/* 模型选择器样式 */
+.model-selector {
+  margin-left: 1rem;
+}
+
+.model-select {
+  padding: 0.3rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+}
+
+/* 聊天消息样式 */
 .chat-messages {
   flex: 1;
-  padding: 1rem;
   overflow-y: auto;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  background: var(--bg-color);
+  background-color: var(--bg-color);
 }
+
 .message {
   display: flex;
-  gap: 0.8rem;
-  max-width: 85%;
+  align-items: flex-start;
+  gap: 0.5rem;
+  max-width: 90%;
 }
-.ai-message {
-  align-self: flex-start;
-}
+
 .user-message {
   align-self: flex-end;
   flex-direction: row-reverse;
 }
+
 .message-avatar {
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
-  background: var(--primary-color);
+  background-color: var(--primary-color);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
+
 .user-message .message-avatar {
-  background: var(--secondary-color);
+  background-color: var(--primary-light);
 }
+
 .message-content {
-  white-space: pre-line;
-  padding: 0.8rem 1.2rem;
-  border-radius: 18px;
-  background: white;
-  border: 1px solid var(--border-color);
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  background-color: var(--hover-color);
+  line-height: 1.5;
+  color: var(--text-primary);
 }
+
 .user-message .message-content {
-  background: var(--primary-light);
-  color: var(--primary-color);
-  border-color: var(--primary-color);
-}
-.chat-input {
-  display: flex;
-  gap: 0.5rem;
-  padding: 1rem;
-  border-top: 1px solid var(--border-color);
-}
-.chat-input textarea {
-  flex: 1;
-  padding: 0.8rem;
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  resize: none;
-  min-height: 4rem;
-  max-height: 10rem;
-}
-.send-btn {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 50%;
-  background: var(--primary-color);
+  background-color: var(--primary-color);
   color: white;
-  border: none;
-  cursor: pointer;
-  align-self: flex-end;
-}
-.send-btn:disabled {
-  background: var(--border-color);
-  cursor: not-allowed;
 }
 
 /* 打字指示器 */
@@ -363,6 +408,7 @@ const switchTab = (index: number) => (activeTab.value = index);
   gap: 0.3rem;
   padding: 0.8rem;
 }
+
 .dot {
   width: 0.6rem;
   height: 0.6rem;
@@ -370,12 +416,15 @@ const switchTab = (index: number) => (activeTab.value = index);
   background: var(--text-secondary);
   animation: typing 1.4s infinite both;
 }
+
 .dot:nth-child(1) {
   animation-delay: 0s;
 }
+
 .dot:nth-child(2) {
   animation-delay: 0.2s;
 }
+
 .dot:nth-child(3) {
   animation-delay: 0.4s;
 }
@@ -391,159 +440,60 @@ const switchTab = (index: number) => (activeTab.value = index);
   }
 }
 
-/* 响应式调整 */
-@media (max-width: 768px) {
-  .main-content {
-    grid-template-columns: 1fr;
-  }
-}
-.ai-creation-container {
-  padding: 1.5rem;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-/* 顶部导航 */
-.top-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border-color);
-}
-.nav-tabs {
-  display: flex;
-  gap: 0.5rem;
-}
-.tab {
-  padding: 0.5rem 1.5rem;
-  background: var(--bg-color);
-  border: 1px solid var(--border-color);
-  border-radius: 4px 4px 0 0;
-  cursor: pointer;
-}
-.tab.active {
-  background: var(--primary-light);
-  color: var(--primary-color);
-  border-bottom-color: transparent;
-}
-.toolbar {
-  display: flex;
-  gap: 1rem;
-}
-.toolbar-btn {
-  padding: 0.4rem 0.8rem;
-  background: var(--bg-color);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-/* 主内容区 */
-.main-content {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 2rem;
-  margin-bottom: 2rem;
-}
-
 /* 输入区样式 */
-.input-section {
+.chat-input {
   display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-.input-group {
-  display: flex;
-  flex-direction: column;
   gap: 0.5rem;
+  padding: 1rem;
+  border-top: 1px solid var(--border-color);
+  background-color: var(--bg-color);
 }
-label {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-}
-.title-input {
-  padding: 0.8rem;
+
+.chat-input textarea {
+  flex: 1;
   border: 1px solid var(--border-color);
-  border-radius: 4px;
-}
-.content-input {
-  min-height: 200px;
+  border-radius: 5px;
+  resize: none;
+  min-height: 4rem;
+  max-height: 10rem;
+  font-size: 1rem;
   padding: 0.8rem;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+}
+
+/* 发送按钮样式 */
+.send-btn {
+  min-width: 4rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  padding: 1rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
   resize: vertical;
 }
-.char-count {
-  align-self: flex-end;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
+
+.send-btn:disabled {
+  background-color: var(--border-color);
+  cursor: not-allowed;
 }
 
-/* 设置区样式 */
-.settings-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  padding: 1.5rem;
-  background: var(--bg-color);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-}
-.setting-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-select {
-  padding: 0.6rem;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  background: white;
-}
-.generate-btn {
-  padding: 0.8rem;
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-top: 1rem;
+/* 调整图标大小和间距 */
+.anticon {
+  font-size: 16px;
+  margin-right: 4px;
 }
 
-/* 底部操作栏 */
-.bottom-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-color);
-}
-.action-btn {
-  padding: 0.6rem 1.2rem;
-  background: var(--bg-color);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  cursor: pointer;
-}
-.primary-btn {
-  padding: 0.6rem 1.2rem;
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+.message-avatar .anticon {
+  margin-right: 0;
 }
 
 /* 响应式调整 */
 @media (max-width: 768px) {
   .main-content {
     grid-template-columns: 1fr;
-  }
-  .bottom-actions {
-    flex-wrap: wrap;
-    justify-content: center;
   }
 }
 </style>
