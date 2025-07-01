@@ -2,14 +2,22 @@ import os
 import logging
 from logging.handlers import RotatingFileHandler
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field,ConfigDict
+from pydantic import BaseModel, Field, ConfigDict
 from src.services.ai_providers import AIProviderFactory, AIProvider
 import requests
+import asyncio
+import json
 from dotenv import load_dotenv
-from src.services.html_creator import HTMLCreator
-from src.services.image_renderer import ImageRenderer
+from src.services.html_creator import HTMLCreator # Keep HTMLCreator factory
+
+# Import new generator classes
+from src.services.html_generation.title_generator import TitleGenerator
+from src.services.html_generation.css_generator import CSSGenerator
+from src.services.html_generation.content_generator import ContentGenerator
+from src.services.html_generation.content_splitter import ContentSplitter
+from src.services.html_generation.html_builder import HTMLBuilder
 
 # 加载环境变量
 load_dotenv()
@@ -65,13 +73,33 @@ class GenerateRequest(BaseModel):
     model: str = Field(default="llama3")
     service: str = Field(default="ollama")
 
+# Reuse HTMLGenerateRequest for title, css, and content generation initial parameters
 class HTMLGenerateRequest(BaseModel):
     theme: str = Field(..., min_length=1, description="主题不能为空")
     style: str = Field(..., min_length=1, description="风格不能为空")
     audience: str = Field(..., min_length=1, description="受众不能为空")
 
-class ImageGenerateRequest(BaseModel):
-    html: str = Field(..., description="HTML内容，用于生成图片")
+# New request models for split and build steps
+class ContentRequest(BaseModel):
+    title: str = Field(..., min_length=1, description="标题不能为空")
+    theme: str = Field(..., min_length=1, description="主题不能为空")
+    style: str = Field(..., min_length=1, description="风格不能为空")
+    audience: str = Field(..., min_length=1, description="受众不能为空")
+
+class SectionsRequest(BaseModel):
+    content: str = Field(..., min_length=1, description="内容不能为空")
+    num_sections: int = Field(1, ge=1, description="分割的段落数量")
+
+class BuildRequest(BaseModel):
+    title: str = Field(..., min_length=1, description="标题不能为空")
+    css_style: str = Field(..., min_length=1, description="CSS样式不能为空")
+    sections: list[str] = Field(..., min_length=1, description="HTML内容片段列表")
+
+# Add new request model for section HTML generation
+class SectionHTMLRequest(BaseModel):
+    title: str = Field(..., min_length=1, description="标题不能为空")
+    description: str = Field(..., min_length=1, description="内容描述不能为空")
+    css_style: str = Field(..., min_length=1, description="CSS样式不能为空")
 
 @app.get("/")
 async def read_root():
@@ -102,27 +130,126 @@ async def generate_content(request: GenerateRequest):
         logger.error(f"Failed to generate content: {type(e).__name__}: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to generate content: {type(e).__name__}: {str(e)}")
 
-@app.post("/api/generate-html")
-async def generate_html(request: HTMLGenerateRequest):
+# Add new endpoints for HTML generation steps
+
+@app.post("/api/generate-html/title")
+async def generate_html_title(request: HTMLGenerateRequest):
+    """生成小红书笔记标题"""
     try:
-        async with HTMLCreator() as creator:
-            html_content = await creator.create_and_generate(
+        creator = HTMLCreator()
+        title_generator = creator.get_title_generator()
+        async with title_generator:
+            title = await title_generator.generate_note_title(
                 theme=request.theme, style=request.style, audience=request.audience
             )
-            return {"html": html_content}
+        return {"title": title}
     except Exception as e:
-        logger.error(f"Error generating HTML: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to generate HTML: {str(e)}")
+        logger.error(f"生成标题失败: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"生成标题失败: {str(e)}")
 
-@app.post("/api/generate-image")
-async def generate_image(request: ImageGenerateRequest):
+@app.post("/api/generate-html/css")
+async def generate_html_css(request: HTMLGenerateRequest): # Reuse HTMLGenerateRequest for style
+    """生成HTML所需的CSS样式"""
     try:
-        # 生成图片
-        image_bytes = await ImageRenderer.render(request.html)
-        return Response(content=image_bytes, media_type="image/png")
+        creator = HTMLCreator()
+        css_generator = creator.get_css_generator()
+        async with css_generator:
+            css_style = await css_generator.generate_css_style(style=request.style)
+        return {"css_style": css_style}
     except Exception as e:
-        logger.error(f"Error generating image: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to generate image: {str(e)}")
+        logger.error(f"生成CSS失败: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"生成CSS失败: {str(e)}")
+
+@app.post("/api/generate-html/content")
+async def generate_html_content(request: ContentRequest):
+    """生成小红书笔记文案内容"""
+    try:
+        creator = HTMLCreator()
+        content_generator = creator.get_content_generator()
+        async with content_generator:
+            content = await content_generator.generate_note_content(
+                title=request.title,
+                style=request.style,
+                audience=request.audience,
+                theme=request.theme
+            )
+        return {"content": content}
+    except Exception as e:
+        logger.error(f"生成内容失败: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"生成内容失败: {str(e)}")
+
+@app.post("/api/generate-html/sections")
+async def split_html_content(request: SectionsRequest):
+    """将笔记内容分割成多个部分"""
+    try:
+        creator = HTMLCreator()
+        content_splitter = creator.get_content_splitter()
+        async with content_splitter:
+            sections = await content_splitter.split_content_into_sections(
+                content=request.content, num_sections=request.num_sections
+            )
+        return {"sections": sections}
+    except ValueError as e: # Catch ValueError specifically
+        error_msg = f"内容分割验证失败: {str(e)}"
+        logger.error(error_msg, exc_info=True)
+        raise HTTPException(status_code=500, detail=error_msg)
+    except Exception as e:
+        logger.error(f"分割内容失败: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"分割内容失败: {str(e)}")
+
+@app.post("/api/generate-html/build")
+async def build_final_html(request: BuildRequest):
+    """根据标题、CSS和内容片段构建最终HTML并流式返回"""
+    async def event_generator():
+        try:
+            creator = HTMLCreator()
+            html_builder = creator.get_html_builder()
+            async with html_builder:
+                # Assuming sections are already the HTML snippets for each part
+                async for chunk in html_builder.stream_final_html(
+                    title=request.title,
+                    css_style=request.css_style,
+                    sections=request.sections # Pass pre-generated sections
+                ):
+                    # Decode chunk if it's bytes before JSON serialization
+                    chunk_str = chunk.decode() if isinstance(chunk, bytes) else chunk
+                    # Use SSE format
+                    yield f"data: {json.dumps({'type': 'chunk', 'content': chunk_str})}\n\n"
+                    await asyncio.sleep(0.01) # Adjust stream rate if needed
+                # Send completion signal
+                yield f"data: {json.dumps({'type': 'done', 'content': ''})}\n\n"
+        except Exception as e:
+            error_msg = f"构建HTML失败: {str(e)}"
+            logger.error(error_msg, exc_info=True)
+            yield f"data: {json.dumps({'type': 'error', 'content': error_msg})}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
+    )
+
+# Add new endpoint for generating HTML for a single section
+@app.post("/api/generate-html/section_html")
+async def generate_html_section(request: SectionHTMLRequest):
+    """生成单个内容区块的HTML"""
+    try:
+        creator = HTMLCreator()
+        html_builder = creator.get_html_builder()
+        async with html_builder:
+            section_html = await html_builder.generate_image_html(
+                title=request.title,
+                description=request.description,
+                css_style=request.css_style
+            )
+        return {"html": section_html}
+    except Exception as e:
+        logger.error(f"生成内容区块HTML失败: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"生成内容区块HTML失败: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn

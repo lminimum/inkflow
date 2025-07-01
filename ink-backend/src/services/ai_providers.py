@@ -3,7 +3,6 @@ from fastapi import HTTPException
 import os
 import json
 from openai import AuthenticationError, APIError
-from langchain_ollama import OllamaLLM
 from langchain_openai import ChatOpenAI
 
 class AIProvider(ABC):
@@ -21,12 +20,18 @@ class OllamaProvider(AIProvider):
             raise ValueError(f"Model {model} not supported by Ollama provider")
         prompt = "\n".join(f"{m['role']}: {m['content']}" for m in messages)
         try:
-            llm = OllamaLLM(
+            # Use OllamaLLM with base_url, model, and request_timeout
+            llm = ChatOpenAI(
                 base_url=self.base_url,
                 model=model,
-                request_timeout=30
+                temperature=30,
+                api_key=None,  # Ollama does not require an API key
             )
-            return llm.invoke(prompt)
+            response = llm.invoke(prompt)
+            # Ensure response is a string (handle potential list return)
+            if isinstance(response, list):
+                return "".join(str(item) for item in response)
+            return str(response)
         except Exception as e:
             raise ValueError(f"Ollama API error: {str(e)}. Check if base_url '{self.base_url}' and model '{model}' are correct.")
 
@@ -38,7 +43,7 @@ class DeepSeekProvider(AIProvider):
             raise ValueError("DeepSeek API key not found in configuration")
         self.client = ChatOpenAI(
             api_key=self.api_key,
-            openai_api_base=config['base_url'],
+            base_url=config['base_url'],
             temperature=0.7
         )
 
@@ -48,7 +53,10 @@ class DeepSeekProvider(AIProvider):
 
         try:
             response = self.client.invoke(messages, model=model)
-            return response.content
+            # Ensure response is a string
+            if isinstance(response.content, list):
+                return "".join(str(item) for item in response.content)
+            return str(response.content)
         except AuthenticationError as e:
             raise HTTPException(status_code=401, detail=f"DeepSeek authentication failed: {str(e)}")
         except APIError as e:
@@ -65,7 +73,7 @@ class SiliconFlowProvider(AIProvider):
             raise ValueError("SiliconFlow API key not found in configuration")
         self.client = ChatOpenAI(
             api_key=self.api_key,
-            openai_api_base=self.base_url,
+            base_url=self.base_url,
             temperature=0.7
         )
 
@@ -75,7 +83,10 @@ class SiliconFlowProvider(AIProvider):
 
         try:
             response = self.client.invoke(messages, model=model)
-            return response.content
+            # Ensure response is a string
+            if isinstance(response.content, list):
+                return "".join(str(item) for item in response.content)
+            return str(response.content)
         except AuthenticationError as e:
             raise HTTPException(status_code=401, detail=f"SiliconFlow authentication failed: {str(e)}")
         except APIError as e:
@@ -91,7 +102,7 @@ class AliyunBailianProvider(AIProvider):
             raise ValueError("Aliyun Bailian API key not found in configuration")
         self.client = ChatOpenAI(
             api_key=self.api_key,
-            openai_api_base=config['base_url'],
+            base_url=config['base_url'],
             temperature=0.7
         )
 
@@ -101,7 +112,10 @@ class AliyunBailianProvider(AIProvider):
 
         try:
             response = self.client.invoke(messages, model=model)
-            return response.content
+            # Ensure response is a string
+            if isinstance(response.content, list):
+                return "".join(str(item) for item in response.content)
+            return str(response.content)
         except AuthenticationError as e:
             raise HTTPException(status_code=401, detail=f"Aliyun Bailian authentication failed: {str(e)}")
         except APIError as e:
@@ -120,11 +134,14 @@ class AIProviderFactory:
 
     @staticmethod
     def load_config(config_path: str = 'config.json') -> dict:
-        with open(config_path, 'r', encoding='utf-8') as f:
+        # Construct absolute path to config.json relative to the current file
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        config_abs_path = os.path.join(current_dir, '..', '..', config_path)
+        with open(config_abs_path, 'r', encoding='utf-8') as f:
             return json.load(f)
 
     @staticmethod
-    def get_provider(service_name: str, config: dict = None) -> AIProvider:
+    def get_provider(service_name: str, config: dict | None = None) -> AIProvider: # Updated type hint
         if not config:
             config = AIProviderFactory.load_config()
 
