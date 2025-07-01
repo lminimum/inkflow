@@ -2,10 +2,10 @@ import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field,ConfigDict
-from ai_providers import AIProviderFactory, AIProvider
+from src.services.ai_providers import AIProviderFactory, AIProvider
 import requests
 from dotenv import load_dotenv
-from html_generator import HTMLGenerator
+from src.services.html_generator import HTMLGenerator
 
 # 加载环境变量
 load_dotenv()
@@ -81,4 +81,4 @@ async def generate_html(request: HTMLGenerateRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
+    uvicorn.run("src.app.main:app", host="0.0.0.0", port=port, reload=True)

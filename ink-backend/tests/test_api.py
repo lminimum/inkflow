@@ -1,5 +1,8 @@
+import pytest
 from fastapi.testclient import TestClient
-from main import app
+from unittest.mock import patch, MagicMock
+from src.app.main import app
+from src.services.html_generator import HTMLGenerator
 
 client = TestClient(app)
 
@@ -34,3 +37,41 @@ def test_generate_aliyun_bailian():
     )
     assert response.status_code == 200
     assert "content" in response.json()
+
+@patch('main.HTMLGenerator')
+def test_generate_html_endpoint_success(mock_html_generator):
+    # 模拟HTML生成器
+    mock_generator_instance = MagicMock()
+    mock_generator_instance.generate_html_content.return_value = '<html>测试内容</html>'
+    mock_html_generator.return_value = mock_generator_instance
+
+    # 发送请求
+    response = client.post(
+        '/api/generate-html',
+        json={
+            'theme': '旅行',
+            'style': '清新',
+            'audience': '年轻人'
+        }
+    )
+
+    # 验证响应
+    assert response.status_code == 200
+    assert 'html' in response.json()
+    assert response.json()['html'] == '<html>测试内容</html>'
+    mock_generator_instance.generate_html_content.assert_called_once_with(
+        theme='旅行',
+        style='清新',
+        audience='年轻人'
+    )
+
+@patch('main.HTMLGenerator')
+def test_generate_html_endpoint_validation_error(mock_html_generator):
+    # 发送缺少参数的请求
+    response = client.post(
+        '/api/generate-html',
+        json={}
+    )
+
+    # 验证响应
+    assert response.status_code == 422  # FastAPI验证错误状态码

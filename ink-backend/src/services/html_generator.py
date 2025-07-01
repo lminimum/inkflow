@@ -15,7 +15,7 @@ class HTMLGenerator:
     def __init__(self):
         """初始化生成器，加载配置"""
         # 加载配置文件
-        config_path = os.path.join(os.path.dirname(__file__), 'config.json')
+        config_path = os.path.join(os.path.dirname(__file__), '../../config.json')
         with open(config_path, 'r', encoding='utf-8') as f:
             config = json.load(f)
         defaults = config.get('defaults', {})
