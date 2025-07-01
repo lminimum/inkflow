@@ -19,15 +19,12 @@ class OllamaProvider(AIProvider):
     def generate_content(self, messages: list, model: str) -> str:
         if model not in self.models:
             raise ValueError(f"Model {model} not supported by Ollama provider")
-
-        # Convert messages to prompt format
-        prompt = "\n".join([f"{m['role']}: {m['content']}" for m in messages])
-        
+        prompt = "\n".join(f"{m['role']}: {m['content']}" for m in messages)
         try:
             llm = OllamaLLM(
                 base_url=self.base_url,
                 model=model,
-                timeout=30
+                request_timeout=30
             )
             return llm.invoke(prompt)
         except Exception as e:
@@ -36,9 +33,9 @@ class OllamaProvider(AIProvider):
 class DeepSeekProvider(AIProvider):
     def __init__(self, config):
         self.models = config['models']
-        self.api_key = os.getenv('DEEPSEEK_API_KEY')
+        self.api_key = config.get('api_key')
         if not self.api_key:
-            raise ValueError("DEEPSEEK_API_KEY environment variable not set")
+            raise ValueError("DeepSeek API key not found in configuration")
         self.client = ChatOpenAI(
             api_key=self.api_key,
             openai_api_base=config['base_url'],
@@ -63,9 +60,9 @@ class SiliconFlowProvider(AIProvider):
     def __init__(self, config):
         self.base_url = config['base_url']
         self.models = config['models']
-        self.api_key = os.getenv('SILICONFLOW_API_KEY')
+        self.api_key = config.get('api_key')
         if not self.api_key:
-            raise ValueError("SILICONFLOW_API_KEY environment variable not set")
+            raise ValueError("SiliconFlow API key not found in configuration")
         self.client = ChatOpenAI(
             api_key=self.api_key,
             openai_api_base=self.base_url,
@@ -89,9 +86,9 @@ class SiliconFlowProvider(AIProvider):
 class AliyunBailianProvider(AIProvider):
     def __init__(self, config):
         self.models = config['models']
-        self.api_key = os.getenv('ALIBABA_BAILIAN_API_KEY')
+        self.api_key = config.get('api_key')
         if not self.api_key:
-            raise ValueError("ALIBABA_BAILIAN_API_KEY environment variable not set")
+            raise ValueError("Aliyun Bailian API key not found in configuration")
         self.client = ChatOpenAI(
             api_key=self.api_key,
             openai_api_base=config['base_url'],
@@ -122,8 +119,8 @@ class AIProviderFactory:
     }
 
     @staticmethod
-    def load_config(config_path: str = 'ai_services.json') -> dict:
-        with open(config_path, 'r') as f:
+    def load_config(config_path: str = 'config.json') -> dict:
+        with open(config_path, 'r', encoding='utf-8') as f:
             return json.load(f)
 
     @staticmethod

@@ -7,3 +7,7 @@ langchain-ollama
 pytest
 langchain_community
 langchain_openai
+requests
+deepseek
+schedule
+Markdown

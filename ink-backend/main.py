@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field,ConfigDict
 from ai_providers import AIProviderFactory, AIProvider
 import requests
 from dotenv import load_dotenv
+from html_generator import HTMLGenerator
 
 # 加载环境变量
 load_dotenv()
@@ -30,6 +31,11 @@ class GenerateRequest(BaseModel):
     messages: list[Message]
     model: str = Field(default="llama3")
     service: str = Field(default="ollama")
+
+class HTMLGenerateRequest(BaseModel):
+    theme: str
+    style: str
+    audience: str
 
 @app.get("/")
 async def read_root():
@@ -57,6 +63,21 @@ async def generate_content(request: GenerateRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate content: {type(e).__name__}: {str(e)}")
+
+@app.post("/api/generate-html")
+async def generate_html(request: HTMLGenerateRequest):
+    try:
+        generator = HTMLGenerator()
+        html_content = generator.generate_html_content(
+            theme=request.theme,
+            style=request.style,
+            audience=request.audience
+        )
+        return {"html": html_content}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate HTML: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn

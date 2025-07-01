@@ -1,0 +1,13 @@
+{
+    "deepseek_api_key": "YOUR_DEEPSEEK_API_KEY_HERE",
+    "email": {
+        "smtp_server": "smtp.qq.com",
+        "smtp_port": 465,
+        "sender": "your_email@qq.com",
+        "password": "your_email_app_password",
+        "receiver": "receiver_email@example.com"
+    },
+    "data_sources": ["baidu", "weibo"],
+    "output_dir": "reports",
+    "schedule_times": ["10:00", "16:00"]
+}
