@@ -82,12 +82,6 @@ body {
   min-height: 100vh;
 }
 
-.main-content {
-  flex: 1;
-  padding: 24px;
-  overflow-y: auto;
-}
-
 /* 通用组件样式 */
 .ink-title {
   font-size: 24px;

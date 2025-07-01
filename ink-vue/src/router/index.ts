@@ -9,7 +9,7 @@ export default createRouter({
       path: '/',
       name: 'home',
       component: () => import('@/views/HomeView.vue'),
-      meta: { title: '墨韵主页' }
+      meta: { title: '主页' }
     },
     { 
       path: '/ai-creation',
@@ -24,7 +24,8 @@ export default createRouter({
     {
       path: '/models',
       name: 'ModelList',
-      component: ModelList
+      component: ModelList,
+      meta: { title: '添加' }
     }
   ]
 });

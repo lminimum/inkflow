@@ -1,5 +1,10 @@
 <template>
   <nav class="sidebar">
+    <!-- 网站图标 -->
+    <div class="logo-container">
+      <img src="/icons8-墨-32.png" alt="网站图标" class="logo" />
+    </div>
+
     <!-- 导航图标区域 -->
     <template v-for="item in topItems" :key="item.to || JSON.stringify(item)">
       <div
@@ -58,12 +63,19 @@ const handleSettingClick = () => {
 </script>
 
 <style scoped>
+.logo-container {
+  padding: 10px 0;
+}
+
+.logo {
+  width: 32px;
+  height: 32px;
+}
+
 .sidebar {
   width: 60px;
   height: 100vh;
   background: var(--bg-color);
-  padding: 20px 0;
-  border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   align-items: center;

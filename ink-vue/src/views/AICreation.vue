@@ -2,10 +2,6 @@
   <div class="ai-creation-container">
     <!-- 顶部导航 -->
     <div class="top-nav">
-      <div class="nav-tabs">
-        <div class="tab active">AI创作</div>
-        <div class="tab">AI改写</div>
-      </div>
       <div class="toolbar">
         <button class="toolbar-btn"><SaveOutlined /> 保存</button>
         <button class="toolbar-btn"><ExportOutlined /> 导出</button>
@@ -206,21 +202,6 @@ const editContent = () => {
   // 可以在这里实现编辑功能
   alert("编辑功能待实现");
 };
-
-// 字数统计功能
-const titleInput = ref("");
-const contentInput = ref("");
-const titleCount = ref(0);
-const contentCount = ref(0);
-
-// 监听输入变化更新字数统计
-const updateTitleCount = () => (titleCount.value = titleInput.value.length);
-const updateContentCount = () =>
-  (contentCount.value = contentInput.value.length);
-
-// 选项卡切换功能
-const activeTab = ref(0);
-const switchTab = (index: number) => (activeTab.value = index);
 </script>
 
 <style scoped>
@@ -245,26 +226,6 @@ const switchTab = (index: number) => (activeTab.value = index);
   border-bottom: 1px solid var(--border-color);
 }
 
-.nav-tabs {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.tab {
-  padding: 0.5rem 1.5rem;
-  background: var(--bg-color);
-  border: 1px solid var(--border-color);
-  border-radius: 4px 4px 0 0;
-  cursor: pointer;
-  color: var(--text-primary);
-}
-
-.tab.active {
-  background: var(--primary-light);
-  color: var(--primary-color);
-  border-bottom-color: transparent;
-}
-
 .toolbar {
   display: flex;
   gap: 1rem;
@@ -277,11 +238,6 @@ const switchTab = (index: number) => (activeTab.value = index);
   border-radius: 4px;
   cursor: pointer;
   color: var(--text-primary);
-}
-
-/* 主题切换按钮 */
-.theme-toggle {
-  margin-left: 1rem;
 }
 
 /* 主内容区 */
