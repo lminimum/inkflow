@@ -28,6 +28,7 @@ const emit = defineEmits<{
   (e: "update:modelValue", value: string): void;
 }>();
 
+const router = useRouter();
 const route = useRoute();
 const activeKey = ref(props.modelValue);
 
@@ -51,7 +52,6 @@ const handleTabClick = (key: string) => {
   if (matchedTab && route.path !== matchedTab.route) {
     // 原代码使用了未导入的 useRouter，需要先导入 useRouter 并使用它来进行路由跳转
     // 这里需要补充导入 useRouter，以下为修正后的代码
-    const router = useRouter();
     router.push(matchedTab.route);
   }
 };
@@ -68,14 +68,15 @@ watch(
 <style scoped>
 .tab-container {
   display: flex;
-  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  background-color: var(--card-bg);
 }
 
 .tab-item {
   padding: 12px 24px;
   cursor: pointer;
   border-bottom: 2px solid transparent;
-  background-color: var(--bg-color);
+  background-color: var(--card-bg);
   color: var(--text-primary);
   transition: all 0.3s ease;
   font-size: medium;

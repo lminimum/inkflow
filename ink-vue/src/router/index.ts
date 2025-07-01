@@ -11,10 +11,15 @@ export default createRouter({
       component: () => import('@/views/HomeView.vue'),
       meta: { title: '主页' }
     },
-    { 
+    {
       path: '/ai-creation',
       component: () => import('@/views/AICreation.vue'),
       meta: { title: 'AI创作' }
+    },
+    {
+      path: '/html-creation',
+      component: () => import('@/views/HTMLCreation.vue'),
+      meta: { title: 'HTML生成' }
     },
     {
       path: '/add',

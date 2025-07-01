@@ -10,8 +10,8 @@
       <!-- 全局Tab组件 -->
       <GlobalTabs
         :tabs="tabs"
-        :active-tab="activeTab"
-        @tab-change="switchTab"
+        :modelValue="activeTab"
+        @update:modelValue="switchTab"
       />
       <div class="main-content">
         <div class="header">
@@ -37,10 +37,10 @@ import { useRouter, useRoute } from "vue-router";
 import SidebarMenu from "@/components/SidebarMenu.vue";
 import GlobalTabs from "@/components/GlobalTabs.vue";
 import {
-  SettingOutlined,
   HomeOutlined,
   EditOutlined,
   DatabaseOutlined,
+  CodeOutlined,
 } from "@ant-design/icons-vue";
 import ThemeSettings from "@/components/ThemeSettings.vue";
 const isDark = ref(false);
@@ -50,26 +50,22 @@ const showThemeSettings = () => {
 
 // Tab配置
 const tabs = [
-  { label: "主页", value: "home" },
-  { label: "模型", value: "models" },
+  { label: "主页", key: "home", route: "/" },
+  { label: "模型", key: "models", route: "/models" },
 ];
 
 // Tab状态管理
 const activeTab = ref("creation");
 const switchTab = (tab: string) => {
   activeTab.value = tab;
-  // 根据tab切换更新路由
-  if (tab === "creation") {
-    router.push("/ai-creation");
-  } else if (tab === "rewrite") {
-    router.push("/ai-rewrite");
-  }
+  router.push("/ai-creation");
 };
 
 // 定义不同tab对应的导航项
 const creationNavItems = [
   { to: "/", icon: HomeOutlined },
   { to: "/ai-creation", icon: EditOutlined },
+  { to: "/html-creation", icon: CodeOutlined },
   { to: "/models", icon: DatabaseOutlined },
 ];
 
@@ -127,21 +123,24 @@ const handleThemeSettingsClose = () => {
 }
 
 .main-content {
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   border-radius: 10px;
   flex: 1;
   overflow-y: auto;
+  box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1), 0 0 0 rgba(0, 0, 0, 0);
 }
 
 .header {
   display: flex;
   align-items: center;
   position: fixed;
-  width: 100%;
+  width: calc(100% - 64px);
   padding: 0 24px;
   height: 60px;
   background-color: var(--bg-color);
-  border-bottom: 1px solid var(--border-color);
+  border-radius: 10px 10px 0 0;
+  border-bottom: 1.5px solid var(--border-color);
+  z-index: 10;
 }
 .content-container {
   margin-top: 2.5rem;

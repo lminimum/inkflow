@@ -64,7 +64,7 @@ const handleSettingClick = () => {
 
 <style scoped>
 .logo-container {
-  padding: 10px 0;
+  padding: 20px 0 5px 0;
 }
 
 .logo {
@@ -75,7 +75,7 @@ const handleSettingClick = () => {
 .sidebar {
   width: 60px;
   height: 100vh;
-  background: var(--bg-color);
+  background: var(--card-bg);
   display: flex;
   flex-direction: column;
   align-items: center;

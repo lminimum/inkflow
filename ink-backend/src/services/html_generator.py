@@ -6,7 +6,7 @@ import requests
 from playwright.sync_api import sync_playwright
 import time
 import random
-from ai_providers import AIProviderFactory
+from src.services.ai_providers import AIProviderFactory
 
 class HTMLGenerator:
     """
