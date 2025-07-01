@@ -92,7 +92,6 @@
 import { ref } from "vue";
 import { generateHtml } from "../api/htmlGenerate";
 import {
-  SaveOutlined,
   ExportOutlined,
   CopyOutlined,
   EyeOutlined,
@@ -127,8 +126,12 @@ const isGenerating = ref(false);
 // 生成HTML
 const handleGenerateHtml = async () => {
   // 表单验证
-  if (!formData.value.theme || !formData.value.style || !formData.value.audience) {
-    alert('请填写所有必填字段');
+  if (
+    !formData.value.theme ||
+    !formData.value.style ||
+    !formData.value.audience
+  ) {
+    alert("请填写所有必填字段");
     return;
   }
   isGenerating.value = true;

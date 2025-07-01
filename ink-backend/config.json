@@ -3,8 +3,8 @@
     "content_theme": "旅行攻略",
     "style": "清新文艺",
     "target_audience": "年轻女性",
-    "ai_service": "deepseek",
-    "ai_model": "deepseek-chat"
+    "ai_service": "aliyun_bailian",
+    "ai_model": "qwen-plus"
   },
   "services": [
     {
