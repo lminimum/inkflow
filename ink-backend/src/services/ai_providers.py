@@ -24,7 +24,7 @@ class OllamaProvider(AIProvider):
             llm = ChatOpenAI(
                 base_url=self.base_url,
                 model=model,
-                temperature=30,
+                temperature=0.7,  # 将温度从 30 修改为 0.7
                 api_key=None,  # Ollama does not require an API key
             )
             response = llm.invoke(prompt)
