@@ -1,0 +1,43 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+# 忽略所有目录下的__pycache__文件夹
+**/__pycache__/*
+__pycache__
+__pycache__/*
+_*
+.pytest_cache
+**/.pytest_cache/
+# Python virtual environments
+venv/
+env/
+.env.local
+
+# Test outputs
+test_outputs/
+
+# Coverage reports
+.coverage
+htmlcov/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.pyc

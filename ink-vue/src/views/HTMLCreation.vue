@@ -126,10 +126,15 @@ const isGenerating = ref(false);
 
 // 生成HTML
 const handleGenerateHtml = async () => {
+  // 表单验证
+  if (!formData.value.theme || !formData.value.style || !formData.value.audience) {
+    alert('请填写所有必填字段');
+    return;
+  }
   isGenerating.value = true;
   try {
     const response = await generateHtml(formData.value);
-    generatedHtml.value = response;
+    generatedHtml.value = response.html; // 提取html属性
   } catch (error: any) {
     console.error("生成HTML失败:", error);
     alert(`生成失败: ${error.message}`);

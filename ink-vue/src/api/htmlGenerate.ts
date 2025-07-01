@@ -10,11 +10,18 @@ export interface HTMLGenerateParams {
 }
 
 /**
+ * HTML生成响应接口
+ */
+export interface HTMLGenerateResponse {
+  html: string;
+}
+
+/**
  * 调用HTML生成接口
  * @param params 生成参数
- * @returns 生成的HTML内容
+ * @returns 生成的HTML响应对象
  */
-export const generateHtml = async (params: HTMLGenerateParams): Promise<string> => {
+export const generateHtml = async (params: HTMLGenerateParams): Promise<HTMLGenerateResponse> => {
   console.log('生成HTML参数:', params);
   try {
     const response = await apiClient.post('/generate-html', params, { timeout: 60000 });
