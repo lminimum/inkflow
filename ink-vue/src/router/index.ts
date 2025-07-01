@@ -30,7 +30,7 @@ export default createRouter({
       path: '/models',
       name: 'ModelList',
       component: ModelList,
-      meta: { title: '添加' }
+      meta: { title: '模型列表' }
     }
   ]
 });

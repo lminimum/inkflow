@@ -1,13 +1,5 @@
 <template>
   <div class="ai-creation-container">
-    <!-- 顶部导航 -->
-    <div class="top-nav">
-      <div class="toolbar">
-        <button class="toolbar-btn"><SaveOutlined /> 保存</button>
-        <button class="toolbar-btn"><ExportOutlined /> 导出</button>
-      </div>
-    </div>
-
     <!-- 主内容区 -->
     <div class="main-content">
       <!-- 左侧展示界面 -->
@@ -21,6 +13,7 @@
             <button class="action-btn" @click="editContent">
               <EditOutlined /> 编辑
             </button>
+            <button class="action-btn"><ExportOutlined /> 导出</button>
           </div>
         </div>
         <div
@@ -209,7 +202,7 @@ const editContent = () => {
   padding: 1.5rem;
   max-width: 1400px;
   margin: 0 auto;
-  height: calc(100vh - 60px);
+  height: calc(100vh - 108px);
   display: flex;
   flex-direction: column;
   background-color: var(--bg-color);
@@ -243,7 +236,7 @@ const editContent = () => {
 /* 主内容区 */
 .main-content {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: 5fr 2fr;
   gap: 2rem;
   flex: 1;
   overflow: hidden;
@@ -335,6 +328,7 @@ const editContent = () => {
   border: 1px solid var(--border-color);
   background-color: var(--bg-color);
   color: var(--text-primary);
+  width: 120px;
 }
 
 /* 聊天消息样式 */

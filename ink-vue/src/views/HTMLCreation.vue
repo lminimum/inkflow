@@ -1,13 +1,5 @@
 <template>
   <div class="html-creation-container">
-    <!-- 顶部导航 -->
-    <div class="top-nav">
-      <div class="toolbar">
-        <button class="toolbar-btn"><SaveOutlined /> 保存</button>
-        <button class="toolbar-btn"><ExportOutlined /> 导出</button>
-      </div>
-    </div>
-
     <!-- 主内容区 -->
     <div class="main-content">
       <!-- 左侧预览区 -->
@@ -21,6 +13,7 @@
             <button class="action-btn" @click="previewInNewTab">
               <EyeOutlined /> 新窗口预览
             </button>
+            <button class="action-btn"><ExportOutlined /> 导出</button>
           </div>
         </div>
         <div
@@ -50,23 +43,39 @@
             </div>
             <div class="form-group">
               <label for="style">风格</label>
-              <input
-                type="text"
+              <select
                 id="style"
                 v-model="formData.style"
                 required
-                placeholder="输入风格"
-              />
+                class="form-select"
+              >
+                <option value="">请选择风格</option>
+                <option
+                  v-for="option in styleOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </option>
+              </select>
             </div>
             <div class="form-group">
               <label for="audience">受众</label>
-              <input
-                type="text"
+              <select
                 id="audience"
                 v-model="formData.audience"
                 required
-                placeholder="输入受众"
-              />
+                class="form-select"
+              >
+                <option value="">请选择受众</option>
+                <option
+                  v-for="option in audienceOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </option>
+              </select>
             </div>
             <button type="submit" class="generate-btn" :disabled="isGenerating">
               <template v-if="isGenerating">生成中...</template>
@@ -95,6 +104,21 @@ const formData = ref({
   style: "",
   audience: "",
 });
+
+const styleOptions = ref([
+  { value: "modern", label: "现代" },
+  { value: "minimalist", label: "简约" },
+  { value: "retro", label: "复古" },
+  { value: "professional", label: "专业" },
+  { value: "creative", label: "创意" },
+]);
+
+const audienceOptions = ref([
+  { value: "children", label: "儿童" },
+  { value: "teenagers", label: "青少年" },
+  { value: "adults", label: "成人" },
+  { value: "professionals", label: "专业人士" },
+]);
 
 // 生成状态
 const generatedHtml = ref("");
@@ -137,7 +161,7 @@ const previewInNewTab = () => {
   padding: 1.5rem;
   max-width: 1400px;
   margin: 0 auto;
-  height: calc(100vh - 60px);
+  height: calc(100vh - 108px);
   display: flex;
   flex-direction: column;
   background-color: var(--bg-color);
@@ -175,16 +199,15 @@ const previewInNewTab = () => {
   overflow: hidden;
 }
 
-display-section {
+.display-section {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--border-color);
   border-radius: 8px;
   overflow: hidden;
   background-color: var(--bg-color);
 }
 
-display-header {
+.display-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -192,20 +215,26 @@ display-header {
   border-bottom: 1px solid var(--border-color);
 }
 
-display-actions {
+.display-actions {
   display: flex;
   gap: 0.5rem;
 }
 
-action-btn {
+.action-btn {
   padding: 0.6rem 1.2rem;
   background: var(--bg-color);
   border: 1px solid var(--border-color);
   border-radius: 4px;
   cursor: pointer;
+  color: var(--text-primary);
 }
 
-display-content {
+.action-btn:hover,
+.action-btn:active {
+  color: var(--primary-color);
+}
+
+.display-content {
   flex: 1;
   padding: 1.5rem;
   overflow-y: auto;
@@ -222,8 +251,7 @@ display-content {
 }
 
 .form-section {
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-left: 1px solid var(--border-color);
   overflow: hidden;
   background-color: var(--bg-color);
 }
@@ -247,7 +275,8 @@ display-content {
   font-weight: 500;
 }
 
-.form-group input {
+.form-group input,
+.form-group select {
   width: 100%;
   padding: 0.8rem;
   border: 1px solid var(--border-color);
@@ -256,18 +285,31 @@ display-content {
   color: var(--text-primary);
 }
 
-generate-btn {
+.form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 1em;
+}
+
+.generate-btn {
   width: 100%;
-  padding: 0.8rem;
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
+  padding: 0.6rem 1.2rem;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   cursor: pointer;
+  color: var(--text-primary);
   font-size: 1rem;
 }
 
-generate-btn:disabled {
+.generate-btn:hover,
+.generate-btn:active {
+  color: var(--primary-color);
+}
+
+.generate-btn:disabled {
   background-color: var(--border-color);
   cursor: not-allowed;
 }

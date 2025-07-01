@@ -17,7 +17,7 @@ export interface HTMLGenerateParams {
 export const generateHtml = async (params: HTMLGenerateParams): Promise<string> => {
   console.log('生成HTML参数:', params);
   try {
-    const response = await apiClient.post('/api/generate-html', params, { timeout: 60000 });
+    const response = await apiClient.post('/generate-html', params, { timeout: 60000 });
     return response.data;
   } catch (error: any) {
     let errorMessage = 'HTML生成失败';

@@ -55,10 +55,14 @@ const tabs = [
 ];
 
 // Tab状态管理
-const activeTab = ref("creation");
+const activeTab = ref("home");
 const switchTab = (tab: string) => {
   activeTab.value = tab;
-  router.push("/ai-creation");
+  if (tab === "home") {
+    router.push("/");
+  } else if (tab === "models") {
+    router.push("/models");
+  }
 };
 
 // 定义不同tab对应的导航项
@@ -66,18 +70,13 @@ const creationNavItems = [
   { to: "/", icon: HomeOutlined },
   { to: "/ai-creation", icon: EditOutlined },
   { to: "/html-creation", icon: CodeOutlined },
-  { to: "/models", icon: DatabaseOutlined },
 ];
 
-const rewriteNavItems = [
-  { to: "/", icon: HomeOutlined },
-  { to: "/ai-rewrite", icon: EditOutlined },
-  { to: "/models", icon: DatabaseOutlined },
-];
+const modelNavItems = [{ to: "/models", icon: DatabaseOutlined }];
 
 // 动态导航项
 const topNavItems = computed(() => {
-  return activeTab.value === "creation" ? creationNavItems : rewriteNavItems;
+  return activeTab.value === "home" ? creationNavItems : modelNavItems;
 });
 
 const router = useRouter();
@@ -88,10 +87,14 @@ const handleNavClick = (item: { to?: string; handler?: () => void }) => {
   if (item.to) {
     router.push(item.to);
     // 根据路由更新activeTab
-    if (item.to === "/ai-creation") {
-      activeTab.value = "creation";
-    } else if (item.to === "/ai-rewrite") {
-      activeTab.value = "rewrite";
+    if (
+      item.to === "/" ||
+      item.to === "/ai-creation" ||
+      item.to === "/html-creation"
+    ) {
+      activeTab.value = "home";
+    } else if (item.to === "/models") {
+      activeTab.value = "models";
     }
   }
   item.handler?.();

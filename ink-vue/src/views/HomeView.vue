@@ -24,9 +24,9 @@
         <EditOutlined />
         <h3 style="color: #333">AI创作</h3>
       </div>
-      <div class="nav-card card-color-2" @click="router.push('/add')">
-        <PlusOutlined />
-        <h3 style="color: #333">增加账号</h3>
+      <div class="nav-card card-color-2" @click="router.push('/html-creation')">
+        <CodeOutlined />
+        <h3 style="color: #333">HTML生成</h3>
       </div>
       <div class="nav-card card-color-3" @click="router.push('/data-analysis')">
         <BarChartOutlined />
@@ -114,6 +114,7 @@ import { useRouter } from "vue-router";
 const router = useRouter();
 import {
   EditOutlined,
+  CodeOutlined,
   PlusOutlined,
   BarChartOutlined,
   DatabaseOutlined,
@@ -160,19 +161,24 @@ const hotTopics = [
 
 <style scoped>
 .home-container {
-  margin: 0 auto;
+  padding: 1.5rem;
+  max-width: 1400px;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-color);
   color: var(--text-primary);
+  overflow: hidden;
 }
 
 .rankings-container {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
-  margin-top: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 400fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
   align-items: stretch;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 0.5rem;
 }
 
 .hot-topics-section,
@@ -237,18 +243,18 @@ const hotTopics = [
 
 .stats-card-container {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  margin-bottom: 2rem;
-  width: 60%;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 300px));
+  gap: 0.8rem;
+  margin-bottom: 1.5rem;
+  width: 100%;
 }
 
 .card-container {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 1rem;
-  margin-bottom: 2rem;
-  width: 60%;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.8rem;
+  margin-bottom: 1.5rem;
+  width: 100%;
 }
 
 .nav-card .stat-value {
@@ -260,6 +266,13 @@ const hotTopics = [
 
 .nav-card h3 {
   color: var(--text-primary);
+}
+
+.nav-card {
+  padding: 1rem 0.8rem;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .nav-card.card-color-1 {
