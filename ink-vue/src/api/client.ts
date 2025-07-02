@@ -7,7 +7,7 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000,
+  timeout: 60000, // 将超时时间从 30000 增加到 60000 毫秒
 });
 
 // 请求拦截器

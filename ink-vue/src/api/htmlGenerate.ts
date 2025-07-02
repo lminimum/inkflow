@@ -195,12 +195,27 @@ export const generateSectionHtml = async (params: SectionHTMLRequestParams): Pro
     const responseData: unknown = await apiClient.post('/generate-html/section_html', params); // 接收拦截器返回的数据，类型为 unknown
     console.log('generateSectionHtml response data (after interceptor):', responseData);
 
-    // 检查返回的数据是否符合 SectionHTMLResponse 结构
-    if (!responseData || typeof responseData !== 'object' || typeof (responseData as any).html !== 'string' || !(responseData as any).html) {
-      throw new Error("生成内容区块HTML失败或HTML格式不正确。");
+    // 检查返回的数据格式
+    if (typeof responseData === 'string') {
+      // 如果是字符串，尝试从markdown代码块中提取HTML
+      const htmlMatch = responseData.match(/```html\s*([\s\S]*?)\s*```/);
+      if (htmlMatch && htmlMatch[1]) {
+        console.log('Extracted HTML from markdown:', htmlMatch[1]);
+        return { html: htmlMatch[1].trim() }; // 返回提取并清理后的HTML
+      } else {
+        // 如果不是markdown代码块，或者提取失败
+        console.error('Backend returned a string but not a valid markdown html block:', responseData);
+        throw new Error("后端返回了无法解析的字符串格式。");
+      }
+    } else if (responseData && typeof responseData === 'object' && typeof (responseData as any).html === 'string' && (responseData as any).html) {
+      // 如果是期望的JSON格式
+      return responseData as SectionHTMLResponse;
+    } else {
+      // 其他未知格式
+      console.error('Backend returned unexpected data format:', responseData);
+      throw new Error("从后端获取内容区块HTML失败或格式不正确。");
     }
 
-    return responseData as SectionHTMLResponse; // 将检查后的数据断言为 SectionHTMLResponse
   } catch (error: any) {
     console.error('生成内容区块HTML失败:', error);
     throw error;

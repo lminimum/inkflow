@@ -16,12 +16,12 @@
             <button class="action-btn"><ExportOutlined /> 导出</button>
           </div>
         </div>
-        <div
-          class="display-content"
-          v-if="generatedHtml"
-          v-html="generatedHtml"
-        ></div>
-        <p v-else class="empty-hint">生成的HTML将显示在这里...</p>
+        <div class="display-content" style="display: flex; justify-content: center; align-items: center; height: 420px; max-width: 700px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px 0 rgba(0,0,0,0.04); overflow: hidden;">
+          <!-- 限定内容区域大小，内容自适应缩放 -->
+          <HtmlSectionPager :sections="htmlSections" />
+        </div>
+        <!-- 保留这个段落用于没有内容时的提示 -->
+        <p v-if="!htmlSections.length" class="empty-hint">生成的HTML将显示在这里...</p>
       </div>
 
       <!-- 右侧表单区 -->
@@ -89,21 +89,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-// import { generateHtml } from "../api/htmlGenerate"; // 移除旧的导入
+import { ref, onMounted } from "vue";
+import { storeToRefs } from 'pinia';
+import { useHtmlStore } from '../store/htmlStore';
+import HtmlSectionPager from '../components/HtmlSectionPager.vue'; // 添加这一行
+// ...其他导入
 import { 
   generateTitle, 
   generateCss, 
   generateContent, 
   splitContentIntoSections, 
   generateSectionHtml, 
-  // buildFinalHtml, // 移除未使用的导入
-  type HTMLGenerateParams, // 导入需要的类型
+  buildFinalHtml, 
+  type HTMLGenerateParams, 
   type ContentRequestParams,
   type SectionsRequestParams,
   type SectionHTMLRequestParams,
-  // type BuildRequestParams // 移除未使用的导入
-} from "../api/htmlGenerate"; // 导入所有需要的接口和类型
+  type BuildRequestParams 
+} from "../api/htmlGenerate";
 import {
   ExportOutlined,
   CopyOutlined,
@@ -133,10 +136,14 @@ const audienceOptions = ref([
 ]);
 
 // 生成状态
-const generatedHtml = ref("");
 const isGenerating = ref(false);
+const htmlStore = useHtmlStore();
+const { htmlSections } = storeToRefs(htmlStore);
 
-// 生成HTML (测试模式)
+// 用于存储完整的HTML，用于复制和预览
+const fullGeneratedHtml = ref('');
+
+// 生成HTML
 const handleGenerateHtml = async () => {
   // 表单验证
   if (
@@ -147,37 +154,36 @@ const handleGenerateHtml = async () => {
     alert("请填写所有必填字段");
     return;
   }
-
   isGenerating.value = true;
-  generatedHtml.value = ""; // 清空之前的生成内容
-
+  htmlStore.clearHtml();
+  fullGeneratedHtml.value = ''; // 清空完整HTML
   try {
     // 1. 调用生成标题接口
-    console.log("开始测试生成标题接口...");
+    console.log("开始生成标题...");
     const titleParams: HTMLGenerateParams = formData.value;
     const titleResponse = await generateTitle(titleParams);
     
     // 检查 titleResponse 和 title 属性是否存在
     if (!titleResponse || !titleResponse.title) {
-      throw new Error("测试失败: 从后端获取标题失败或标题为空。");
+      throw new Error("从后端获取标题失败或标题为空。");
     }
     const title = titleResponse.title;
-    console.log("测试成功: 标题生成接口返回标题:", title);
+    console.log("标题生成完成:", title);
 
     // 2. 调用生成CSS接口
-    console.log("开始测试生成CSS接口...");
+    console.log("开始生成CSS...");
     const cssParams: HTMLGenerateParams = formData.value;
     const cssResponse = await generateCss(cssParams);
     
     // 检查 cssResponse 和 css_style 属性是否存在
      if (!cssResponse || !cssResponse.css_style) {
-      throw new Error("测试失败: 从后端获取CSS失败或CSS为空。\n" + JSON.stringify(cssResponse));
+      throw new Error("从后端获取CSS失败或CSS为空。");
     }
     const css_style = cssResponse.css_style;
-    console.log("测试成功: CSS生成接口返回CSS样式:\n", css_style);
+    console.log("CSS生成完成:", css_style);
 
     // 3. 调用生成内容接口
-    console.log("开始测试生成内容接口...");
+    console.log("开始生成内容...");
     const contentParams: ContentRequestParams = {
       title: title,
       ...formData.value, // theme, style, audience
@@ -186,13 +192,13 @@ const handleGenerateHtml = async () => {
     
     // 检查 contentResponse 和 content 属性是否存在
     if (!contentResponse || !contentResponse.content) {
-      throw new Error("测试失败: 从后端获取内容失败或内容为空。\n" + JSON.stringify(contentResponse));
+      throw new Error("从后端获取内容失败或内容为空。");
     }
     const content = contentResponse.content;
-    console.log("测试成功: 内容生成接口返回内容");
+    console.log("内容生成完成");
 
     // 4. 调用内容分割接口
-    console.log("开始测试内容分割接口...\n内容长度:", content.length);
+    console.log("开始分割内容...");
     const sectionsParams: SectionsRequestParams = {
       content: content,
       num_sections: 5, // 暂时固定分割成5段，后续可以考虑用户输入或动态计算
@@ -201,64 +207,94 @@ const handleGenerateHtml = async () => {
     
     // 检查 sectionsResponse 和 sections 属性是否存在且为数组
     if (!sectionsResponse || !Array.isArray(sectionsResponse.sections) || sectionsResponse.sections.length === 0) {
-       throw new Error("测试失败: 从后端分割内容失败或内容片段为空。\n" + JSON.stringify(sectionsResponse));
+       throw new Error("从后端分割内容失败或内容片段为空。");
     }
     const textSections = sectionsResponse.sections;
-    console.log("测试成功: 内容分割接口返回", textSections.length, "段内容片段");
+    console.log("内容分割完成，共", textSections.length, "段");
 
     // 5. 遍历内容片段，调用生成单个内容区块HTML接口
-    console.log("开始测试生成单个内容区块HTML接口...");
-    const htmlSections: string[] = [];
+    console.log("开始生成内容区块HTML...");
     for (const section of textSections) {
       const sectionHtmlParams: SectionHTMLRequestParams = {
         title: title,
         description: section,
         css_style: css_style,
       };
-      const sectionHtmlResponse = await generateSectionHtml(sectionHtmlParams);
-      
-      // 检查 sectionHtmlResponse 和 html 属性是否存在
-      if (!sectionHtmlResponse || !sectionHtmlResponse.html) {
-         console.warn("测试警告: 生成一个内容区块HTML失败或HTML为空，跳过此段。\n" + JSON.stringify(sectionHtmlResponse));
-         continue; // 跳过当前片段，继续处理下一段
+      try {
+        const sectionHtmlResponse = await generateSectionHtml(sectionHtmlParams);
+        if (sectionHtmlResponse && sectionHtmlResponse.html) {
+          htmlStore.addHtmlSection(sectionHtmlResponse.html);
+          console.log("生成一个内容区块HTML");
+        } else {
+          console.warn("生成一个内容区块HTML失败或HTML为空，跳过此段。");
+        }
+      } catch (err) {
+        console.error('生成内容区块HTML失败:', err);
       }
-      htmlSections.push(sectionHtmlResponse.html);
-      console.log("测试成功: 生成一个内容区块HTML");
     }
-    
-    if (htmlSections.length === 0) {
-        throw new Error("测试失败: 所有内容区块HTML生成失败或为空。");
+    if (htmlStore.htmlSections.length === 0) {
+      throw new Error("所有内容区块HTML生成失败或为空。");
     }
-    console.log("测试成功: 所有内容区块HTML生成完成");
+    console.log("所有内容区块HTML生成完成");
 
-    // 测试模式下，不调用 buildFinalHtml
-    console.log("所有API接口测试通过！请检查控制台输出确认返回数据。");
-    alert("所有API接口测试通过！请检查控制台输出确认返回数据。");
+    // 6. 调用构建最终HTML接口 (处理SSE流)
+    console.log("开始构建最终HTML...");
+    const buildParams: BuildRequestParams = {
+      title: title,
+      css_style: css_style,
+      sections: htmlStore.htmlSections, // 直接用store里的sections
+    };
+
+    buildFinalHtml(
+      buildParams,
+      (chunk) => {
+        // 接收到HTML片段时，追加到本地变量
+        fullGeneratedHtml.value += chunk;
+      },
+      () => {
+        // 流结束时
+        isGenerating.value = false;
+        console.log("最终HTML构建完成");
+      },
+      (error) => {
+        // 发生错误时
+        console.error("构建最终HTML失败:", error);
+        alert(`构建失败: ${error.message || error}`); // 改进错误提示
+        isGenerating.value = false;
+      }
+    );
 
   } catch (error: any) {
-    console.error("API接口测试失败:", error);
-    alert(`API接口测试失败: ${error.message || error}`); // 改进错误提示
-  } finally {
+    console.error("生成HTML流程失败:", error);
+    alert(`生成失败: ${error.message || error}`); // 改进错误提示
     isGenerating.value = false;
   }
 };
 
-// 复制HTML到剪贴板
+// 复制完整HTML到剪贴板
 const copyHtml = () => {
-  if (!generatedHtml.value) return;
-  navigator.clipboard.writeText(generatedHtml.value);
+  if (!fullGeneratedHtml.value) return;
+  navigator.clipboard.writeText(fullGeneratedHtml.value);
   alert("HTML内容已复制到剪贴板");
 };
 
-// 在新窗口预览
+// 在新窗口预览完整HTML
 const previewInNewTab = () => {
-  if (!generatedHtml.value) return;
+  if (!fullGeneratedHtml.value) return;
   const newWindow = window.open("", "_blank");
   if (newWindow) {
-    newWindow.document.write(generatedHtml.value);
+    newWindow.document.write(fullGeneratedHtml.value);
     newWindow.document.close();
   }
 };
+
+// 页面初始化时恢复内容 (如果需要)
+onMounted(() => {
+  // 目前不实现恢复功能，每次进入页面清空
+  htmlStore.clearHtml();
+  fullGeneratedHtml.value = '';
+});
+
 </script>
 
 <style scoped>
@@ -342,10 +378,12 @@ const previewInNewTab = () => {
 .display-content {
   flex: 1;
   padding: 1.5rem;
-  overflow-y: auto;
+  overflow-y: hidden; /* 禁用垂直滚动 */
+  overflow-x: auto; /* 启用水平滚动 */
   background: white;
   color: black;
   min-height: 300px;
+  white-space: nowrap; /* 防止内容换行 */
 }
 
 .empty-hint {
@@ -417,5 +455,27 @@ const previewInNewTab = () => {
 .generate-btn:disabled {
   background-color: var(--border-color);
   cursor: not-allowed;
+}
+
+.html-section-list {
+  display: flex; /* 使用 flexbox 实现水平布局 */
+  flex-direction: row; /* 子元素水平排列 */
+  gap: 2rem;
+  padding-bottom: 1rem; /* 避免滚动条遮挡内容 */
+}
+
+.html-section-item {
+  flex: 0 0 auto; /* 不伸缩，不收缩，基于内容决定大小 */
+  width: 80%; /* 或者一个固定宽度，根据需要调整 */
+  max-width: 600px; /* 最大宽度限制 */
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  /* margin-bottom: 1rem; */ /* 移除底部 margin */
+  padding: 1.5rem;
+  background: #fff;
+  color: #222;
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.04);
+  min-height: 200px;
+  overflow-x: auto; /* 允许单个 section 内部滚动 */
 }
 </style>
