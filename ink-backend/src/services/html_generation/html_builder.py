@@ -1,6 +1,7 @@
 import asyncio
 from .base_generator import BaseGenerator
 from .constants import PROMPTS
+import re
 
 class HTMLBuilder(BaseGenerator):
     async def generate_image_html(self, title: str, description: str, css_style: str) -> str:
@@ -10,7 +11,11 @@ class HTMLBuilder(BaseGenerator):
             description=description,
             css_style=css_style
         )
-        return await self.call_ai_service(prompt)
+        html = await self.call_ai_service(prompt)
+        # 更强力去除 markdown 代码块标记
+        html = re.sub(r'```html[\s\S]*?```', '', html, flags=re.IGNORECASE).strip()
+        html = re.sub(r'```[\s\S]*?```', '', html, flags=re.IGNORECASE).strip()
+        return html
 
     async def generate_section_html(self, content, section_num):
         """生成单个内容区块的HTML"""

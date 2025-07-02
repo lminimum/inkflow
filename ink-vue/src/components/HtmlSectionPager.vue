@@ -32,9 +32,16 @@
 
 <script setup lang="ts">
 import { ref, watch, watchEffect, onMounted, nextTick } from "vue";
+import { defineProps } from 'vue';
+
+interface HtmlSectionItem {
+  html: string;
+  file_path?: string;
+}
+
 const pagerContainer = ref<HTMLElement | null>(null);
 // import testHtml from "../../../ink-backend/tests/test_outputs/generated_html.html?raw";
-const props = defineProps<{ sections?: string[] }>();
+const props = defineProps<{ sections: HtmlSectionItem[] }>();
 const currentIndex = ref(0);
 const currentSection = ref("");
 const iframeRef = ref<HTMLIFrameElement | null>(null);
@@ -43,7 +50,7 @@ const containerRef = ref<HTMLDivElement | null>(null);
 
 watchEffect(() => {
   if (props.sections && props.sections.length > 0) {
-    currentSection.value = props.sections[currentIndex.value];
+    currentSection.value = props.sections[currentIndex.value].html;
   } else {
     currentSection.value = "";
   }

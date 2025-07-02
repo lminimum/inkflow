@@ -110,7 +110,7 @@
 <script setup lang="ts">
 import { ref, onMounted, reactive } from "vue";
 import { storeToRefs } from 'pinia';
-import { useHtmlStore } from '../store/htmlStore';
+import { useHtmlStore, type HtmlSectionItem } from '../store/htmlStore';
 import HtmlSectionPager from '../components/HtmlSectionPager.vue';
 // ...其他导入
 import { 
@@ -119,12 +119,10 @@ import {
   generateContent, 
   splitContentIntoSections, 
   generateSectionHtml, 
-  buildFinalHtml, 
   type HTMLGenerateParams, 
   type ContentRequestParams,
   type SectionsRequestParams,
   type SectionHTMLRequestParams,
-  type BuildRequestParams 
 } from "../api/htmlGenerate";
 import {
   ExportOutlined,
@@ -256,9 +254,11 @@ const handleGenerateHtml = async () => {
       try {
         const sectionHtmlResponse = await generateSectionHtml(sectionHtmlParams);
         if (sectionHtmlResponse && sectionHtmlResponse.html) {
-          // 去除markdown代码块包裹
-          let html = sectionHtmlResponse.html.replace(/```html[\s\S]*?<html.*?>|```/gi, '').trim();
-          htmlStore.addHtmlSection(html);
+          // 存储 html 及 file_path
+          htmlStore.addHtmlSection({
+            html: sectionHtmlResponse.html,
+            file_path: sectionHtmlResponse.file_path
+          });
           sectionHtmlArr.push('已生成');
         } else {
           sectionHtmlArr.push('生成失败');
@@ -273,32 +273,10 @@ const handleGenerateHtml = async () => {
     debugResults.push({ label: '区块HTML', value: sectionHtmlArr.join('\n\n') });
     currentStage.value = '正在构建最终HTML';
 
-    // 6. 调用构建最终HTML接口 (处理SSE流)
-    const buildParams: BuildRequestParams = {
-      title: title,
-      css_style: css_style,
-      sections: htmlStore.htmlSections, // 直接用store里的sections
-    };
-
-    buildFinalHtml(
-      buildParams,
-      (chunk) => {
-        // 接收到HTML片段时，追加到本地变量
-        fullGeneratedHtml.value += chunk;
-      },
-      () => {
-        // 流结束时
-        isGenerating.value = false;
-        debugResults.push({ label: '最终HTML', value: '已生成' });
-        currentStage.value = '';
-      },
-      (error) => {
-        // 发生错误时
-        alert(`构建失败: ${error.message || error}`); // 改进错误提示
-        isGenerating.value = false;
-        currentStage.value = '';
-      }
-    );
+    // 6. 不再拼接完整 HTML，直接结束
+    isGenerating.value = false;
+    debugResults.push({ label: '最终HTML', value: '已生成' });
+    currentStage.value = '';
 
   } catch (error: any) {
     alert(`生成失败: ${error.message || error}`); // 改进错误提示

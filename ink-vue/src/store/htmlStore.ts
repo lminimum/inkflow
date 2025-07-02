@@ -1,16 +1,21 @@
 import { defineStore } from 'pinia';
 
+export interface HtmlSectionItem {
+    html: string;
+    file_path?: string;
+}
+
 export const useHtmlStore = defineStore('html', {
     state: () => ({
-        htmlSections: [] as string[], // 只保存每个HTML片段
+        htmlSections: [] as HtmlSectionItem[], // 保存每个HTML片段及其文件路径
     }),
     actions: {
         /**
          * 追加一个HTML片段到数组
-         * @param html HTML片段
+         * @param item HTML片段及路径
          */
-        addHtmlSection(html: string) {
-            this.htmlSections.push(html);
+        addHtmlSection(item: HtmlSectionItem) {
+            this.htmlSections.push(item);
         },
         /**
          * 清空所有HTML片段

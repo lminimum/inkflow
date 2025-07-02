@@ -69,6 +69,7 @@ export interface SectionHTMLRequestParams {
  */
 export interface SectionHTMLResponse {
   html: string; // 单个内容区块的HTML片段
+  file_path?: string; // 新增：后端返回的文件路径
 }
 
 /**
@@ -79,8 +80,6 @@ export interface BuildRequestParams {
   css_style: string;
   sections: string[]; // HTML内容片段列表 (由 generateSectionHtml 生成)
 }
-
-// 移除旧的 HTMLGenerateResponse 接口和 generateHtml 函数
 
 /**
  * 调用生成标题接口
@@ -188,118 +187,19 @@ export const splitContentIntoSections = async (params: SectionsRequestParams): P
  * @returns 单个内容区块HTML响应对象
  */
 export const generateSectionHtml = async (params: SectionHTMLRequestParams): Promise<SectionHTMLResponse> => {
-  console.log('生成内容区块HTML参数:', params);
-  console.log('Attempting apiClient.post for /generate-html/section_html'); // 添加日志
   try {
-    // apiClient.post returns the data payload directly due to interceptor
-    const responseData: unknown = await apiClient.post('/generate-html/section_html', params); // 接收拦截器返回的数据，类型为 unknown
-    console.log('generateSectionHtml response data (after interceptor):', responseData);
-
+    const responseData: unknown = await apiClient.post('/generate-html/section_html', params);
     // 检查返回的数据格式
-    if (typeof responseData === 'string') {
-      // 如果是字符串，尝试从markdown代码块中提取HTML
-      const htmlMatch = responseData.match(/```html\s*([\s\S]*?)\s*```/);
-      if (htmlMatch && htmlMatch[1]) {
-        console.log('Extracted HTML from markdown:', htmlMatch[1]);
-        return { html: htmlMatch[1].trim() }; // 返回提取并清理后的HTML
-      } else {
-        // 如果不是markdown代码块，或者提取失败
-        console.error('Backend returned a string but not a valid markdown html block:', responseData);
-        throw new Error("后端返回了无法解析的字符串格式。");
-      }
-    } else if (responseData && typeof responseData === 'object' && typeof (responseData as any).html === 'string' && (responseData as any).html) {
-      // 如果是期望的JSON格式
-      return responseData as SectionHTMLResponse;
+    if (responseData && typeof responseData === 'object' && typeof (responseData as any).html === 'string') {
+      // 支持 file_path 字段
+      return {
+        html: (responseData as any).html,
+        file_path: (responseData as any).file_path || undefined
+      };
     } else {
-      // 其他未知格式
-      console.error('Backend returned unexpected data format:', responseData);
       throw new Error("从后端获取内容区块HTML失败或格式不正确。");
     }
-
   } catch (error: any) {
-    console.error('生成内容区块HTML失败:', error);
     throw error;
   }
-};
-
-
-/**
- * 调用构建最终HTML接口 (处理SSE流)
- * @param params 构建参数 (title, css_style, sections)
- * @param onChunk 接收到HTML片段时的回调函数
- * @param onDone 流结束时的回调函数
- * @param onError 发生错误时的回调函数
- */
-export const buildFinalHtml = (
-  params: BuildRequestParams,
-  onChunk: (chunk: string) => void,
-  onDone: () => void,
-  onError: (error: any) => void
-) => {
-  console.log('构建最终HTML参数:', params);
-
-  // 使用 fetch API 处理 SSE 流
-  fetch('/api/generate-html/build', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(params),
-  })
-    .then(async (response) => {
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || '构建HTML失败');
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('无法获取响应读取器');
-      }
-
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      const processChunk = async ({ done, value }: ReadableStreamReadResult<Uint8Array>) => {
-        if (done) {
-          onDone();
-          return;
-        }
-
-        buffer += decoder.decode(value, { stream: true });
-
-        // 处理可能包含多个事件的缓冲区
-        const events = buffer.split('\n\n');
-        buffer = events.pop() || ''; // 保留最后一个不完整的事件
-
-        for (const event of events) {
-          if (event.startsWith('data: ')) {
-            try {
-              const jsonString = event.substring(6);
-              const data = JSON.parse(jsonString);
-              if (data.type === 'chunk') {
-                onChunk(data.content);
-              } else if (data.type === 'done') {
-                onDone();
-                return; // 结束处理
-              } else if (data.type === 'error') {
-                onError(new Error(data.content));
-                return; // 结束处理
-              }
-            } catch (e) {
-              console.error('解析SSE数据失败:', e);
-              onError(e);
-              return; // 结束处理
-            }
-          }
-        }
-
-        // 继续读取下一个块
-        reader.read().then(processChunk).catch(onError);
-      };
-
-      // 开始读取流
-      reader.read().then(processChunk).catch(onError);
-    })
-    .catch(onError);
 };
