@@ -13,6 +13,7 @@ import json
 from pathlib import Path
 from playwright.async_api import async_playwright
 import logging
+from typing import Optional
 
 # 设置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -28,9 +29,9 @@ class ScreenshotGenerator:
     async def take_screenshot(
         self, 
         html_file: str, 
-        output_path: str = None,
-        width: int = 375,
-        height: int = 667,
+        output_path: Optional[str] = None,
+        width: int = 800,
+        height: Optional[int] = None,
         headless: bool = True,
         full_page: bool = False,
         wait_time: float = 1.0
@@ -66,7 +67,7 @@ class ScreenshotGenerator:
             async with async_playwright() as p:
                 # 启动浏览器
                 browser = await p.chromium.launch(headless=headless)
-                page = await browser.new_page(viewport={"width": width, "height": height})
+                page = await browser.new_page(viewport={"width": width, "height": height or 667})
                 
                 # 加载HTML文件
                 file_url = f"file:///{html_path.absolute()}"
@@ -75,6 +76,15 @@ class ScreenshotGenerator:
                 # 等待页面加载完成
                 await page.wait_for_load_state("networkidle")
                 await asyncio.sleep(wait_time)  # 额外等待确保样式加载完成
+                
+                # 自动获取内容高度
+                if height is None:
+                    body_height = await page.evaluate("document.body.scrollHeight")
+                    logger.info(f"自动检测到页面高度: {body_height}")
+                    await page.set_viewport_size({"width": width, "height": body_height})
+                    height_to_use = body_height
+                else:
+                    height_to_use = height
                 
                 # 截图配置
                 screenshot_options = {
@@ -88,7 +98,7 @@ class ScreenshotGenerator:
                         "x": 0, 
                         "y": 0, 
                         "width": width, 
-                        "height": height
+                        "height": height_to_use
                     }
                 
                 # 生成截图
@@ -108,7 +118,7 @@ class ScreenshotGenerator:
     async def batch_screenshot(
         self,
         html_files: list,
-        output_dir: str = None,
+        output_dir: Optional[str] = None,
         width: int = 375,
         height: int = 667,
         headless: bool = True,

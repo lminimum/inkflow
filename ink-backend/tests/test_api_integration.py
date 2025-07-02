@@ -15,10 +15,10 @@ os.makedirs('test_outputs', exist_ok=True)
 # Add a new integration test for the full HTML generation flow
 def test_full_html_generation_flow():
     """集成测试：测试完整的HTML生成流程"""
-    theme = '旅行'
-    style = '清新'
-    audience = '年轻人'
-    num_sections = 2 # Test with splitting into 2 sections
+    theme = '一段关于css高级运用的技巧'
+    style = '创业'
+    audience = '程序员'
+    num_sections = 3 # Test with splitting into 2 sections
 
     # 1. Generate Title
     title_response = client.post('/api/generate-html/title', json={'theme': theme, 'style': style, 'audience': audience})

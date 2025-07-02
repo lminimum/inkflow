@@ -1,7 +1,7 @@
 import os
 import logging
 from logging.handlers import RotatingFileHandler
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.responses import Response, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, ConfigDict
@@ -11,6 +11,7 @@ import asyncio
 import json
 from dotenv import load_dotenv
 from src.services.html_creator import HTMLCreator # Keep HTMLCreator factory
+import uuid
 
 # Import new generator classes
 from src.services.html_generation.title_generator import TitleGenerator
@@ -18,6 +19,7 @@ from src.services.html_generation.css_generator import CSSGenerator
 from src.services.html_generation.content_generator import ContentGenerator
 from src.services.html_generation.content_splitter import ContentSplitter
 from src.services.html_generation.html_builder import HTMLBuilder
+from src.services.screenshot_generator import ScreenshotGenerator
 
 # 加载环境变量
 load_dotenv()
@@ -100,6 +102,15 @@ class SectionHTMLRequest(BaseModel):
     title: str = Field(..., min_length=1, description="标题不能为空")
     description: str = Field(..., min_length=1, description="内容描述不能为空")
     css_style: str = Field(..., min_length=1, description="CSS样式不能为空")
+
+from typing import Optional
+class HtmlToImageRequest(BaseModel):
+    html_path: str
+    output_path: Optional[str] = None
+    width: int = 375
+    height: int = 667
+    full_page: bool = False
+    wait_time: float = 1.0
 
 @app.get("/")
 async def read_root():
@@ -200,6 +211,7 @@ async def split_html_content(request: SectionsRequest):
 @app.post("/api/generate-html/build")
 async def build_final_html(request: BuildRequest):
     """根据标题、CSS和内容片段构建最终HTML并流式返回"""
+    import time
     async def event_generator():
         try:
             creator = HTMLCreator()
@@ -213,15 +225,21 @@ async def build_final_html(request: BuildRequest):
                 ):
                     # Decode chunk if it's bytes before JSON serialization
                     chunk_str = chunk.decode() if isinstance(chunk, bytes) else chunk
+                    # 保存到/tests/test_outputs/
+                    output_dir = os.path.join(os.path.dirname(__file__), '../../tests/test_outputs')
+                    os.makedirs(output_dir, exist_ok=True)
+                    file_path = os.path.join(output_dir, f'final_{int(time.time()*1000)}_{uuid.uuid4().hex}.html')
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(chunk_str)
                     # Use SSE format
-                    yield f"data: {json.dumps({'type': 'chunk', 'content': chunk_str})}\n\n"
+                    yield f"data: {{\"type\": \"chunk\", \"content\": {json.dumps(chunk_str)} }}\n\n"
                     await asyncio.sleep(0.01) # Adjust stream rate if needed
                 # Send completion signal
-                yield f"data: {json.dumps({'type': 'done', 'content': ''})}\n\n"
+                yield f"data: {{\"type\": \"done\", \"content\": \"\"}}\n\n"
         except Exception as e:
             error_msg = f"构建HTML失败: {str(e)}"
             logger.error(error_msg, exc_info=True)
-            yield f"data: {json.dumps({'type': 'error', 'content': error_msg})}\n\n"
+            yield f"data: {{\"type\": \"error\", \"content\": {json.dumps(error_msg)} }}\n\n"
 
     return StreamingResponse(
         event_generator(),
@@ -246,10 +264,35 @@ async def generate_html_section(request: SectionHTMLRequest):
                 description=request.description,
                 css_style=request.css_style
             )
-        return {"html": section_html}
+        # 保存到/tests/test_outputs/
+        output_dir = os.path.join(os.path.dirname(__file__), '../../tests/test_outputs')
+        os.makedirs(output_dir, exist_ok=True)
+        file_path = os.path.join(output_dir, f'section_{uuid.uuid4().hex}.html')
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(section_html)
+        return {"html": section_html, "file_path": file_path}
     except Exception as e:
         logger.error(f"生成内容区块HTML失败: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"生成内容区块HTML失败: {str(e)}")
+
+@app.post("/api/html-to-image")
+async def html_to_image(request: HtmlToImageRequest, background_tasks: BackgroundTasks):
+    """将HTML文件转为图片"""
+    generator = ScreenshotGenerator()
+    # 启动截图任务
+    result = await generator.take_screenshot(
+        html_file=request.html_path,
+        output_path=request.output_path,
+        width=request.width,
+        height=request.height,
+        headless=True,
+        full_page=request.full_page,
+        wait_time=request.wait_time
+    )
+    if result:
+        return {"success": True, "output_path": request.output_path or request.html_path.replace('.html', '.png')}
+    else:
+        return {"success": False, "msg": "截图失败"}
 
 if __name__ == "__main__":
     import uvicorn
