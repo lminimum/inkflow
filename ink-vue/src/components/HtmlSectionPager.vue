@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, nextTick } from "vue";
+import { ref, watch, watchEffect, onMounted, nextTick } from "vue";
 const pagerContainer = ref<HTMLElement | null>(null);
 // import testHtml from "../../../ink-backend/tests/test_outputs/generated_html.html?raw";
 const props = defineProps<{ sections?: string[] }>();
@@ -41,17 +41,13 @@ const iframeRef = ref<HTMLIFrameElement | null>(null);
 const scalerRef = ref<HTMLDivElement | null>(null);
 const containerRef = ref<HTMLDivElement | null>(null);
 
-watch(
-  [() => props.sections, currentIndex],
-  () => {
-    if (props.sections && props.sections.length > 0) {
-      currentSection.value = props.sections[currentIndex.value];
-    } else {
-      currentSection.value = "";
-    }
-  },
-  { immediate: true }
-);
+watchEffect(() => {
+  if (props.sections && props.sections.length > 0) {
+    currentSection.value = props.sections[currentIndex.value];
+  } else {
+    currentSection.value = "";
+  }
+});
 
 watch(
   () => props.sections?.length ?? 0,
@@ -163,6 +159,8 @@ export default {};
 .empty-hint {
   color: var(--text-secondary);
   text-align: center;
+  margin-left: 3rem;
+  margin-right: 3rem;
   margin-top: 2rem;
   font-style: italic;
 }

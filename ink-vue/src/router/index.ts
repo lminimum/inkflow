@@ -19,7 +19,7 @@ export default createRouter({
     {
       path: '/html-creation',
       component: () => import('@/views/HTMLCreation.vue'),
-      meta: { title: 'HTML生成' }
+      meta: { title: '图文生成' }
     },
     {
       path: '/add',

@@ -5,7 +5,7 @@
       <!-- 左侧预览区 -->
       <div class="display-section">
         <div class="display-header">
-          <h2>HTML预览</h2>
+          <h2>图文预览</h2>
           <div class="display-actions">
             <button class="action-btn" @click="copyHtml">
               <CopyOutlined /> 复制HTML
@@ -93,9 +93,13 @@
         <div class="debug-info">
           <h4>生成信息</h4>
           <div v-if="currentStage" class="debug-stage">当前阶段：{{ currentStage }}</div>
-          <div v-for="(item, idx) in debugResults" :key="idx" class="debug-result">
+          <div v-for="(item, idx) in debugResults.filter(i => i.label !== 'CSS' && i.label !== '区块HTML' && i.label !== '最终HTML')" :key="idx" class="debug-result">
             <div class="debug-label">{{ item.label }}：</div>
             <pre class="debug-value">{{ item.value }}</pre>
+          </div>
+          <div v-for="(item, idx) in debugResults.filter(i => i.label === '区块HTML' || i.label === '最终HTML')" :key="'html-' + idx" class="debug-result">
+            <div class="debug-label">{{ item.label }}：</div>
+            <pre class="debug-value">已生成</pre>
           </div>
         </div>
       </div>
@@ -187,42 +191,33 @@ const handleGenerateHtml = async () => {
   currentStage.value = '正在生成标题';
   try {
     // 1. 调用生成标题接口
-    console.log("开始生成标题...");
     const titleParams: HTMLGenerateParams = {
       ...formData.value,
       style,
       audience
     };
     const titleResponse = await generateTitle(titleParams);
-    
-    // 检查 titleResponse 和 title 属性是否存在
     if (!titleResponse || !titleResponse.title) {
       throw new Error("从后端获取标题失败或标题为空。");
     }
     const title = titleResponse.title;
-    console.log("标题生成完成:", title);
     debugResults.push({ label: '标题', value: title });
     currentStage.value = '正在生成CSS';
 
     // 2. 调用生成CSS接口
-    console.log("开始生成CSS...");
     const cssParams: HTMLGenerateParams = {
       ...formData.value,
       style,
       audience
     };
     const cssResponse = await generateCss(cssParams);
-    
-    // 检查 cssResponse 和 css_style 属性是否存在
-     if (!cssResponse || !cssResponse.css_style) {
+    if (!cssResponse || !cssResponse.css_style) {
       throw new Error("从后端获取CSS失败或CSS为空。");
     }
     const css_style = cssResponse.css_style;
-    console.log("CSS生成完成:", css_style);
     currentStage.value = '正在生成内容';
 
     // 3. 调用生成内容接口
-    console.log("开始生成内容...");
     const contentParams: ContentRequestParams = {
       title: title,
       theme: formData.value.theme,
@@ -230,35 +225,27 @@ const handleGenerateHtml = async () => {
       audience
     };
     const contentResponse = await generateContent(contentParams);
-    
-    // 检查 contentResponse 和 content 属性是否存在
     if (!contentResponse || !contentResponse.content) {
       throw new Error("从后端获取内容失败或内容为空。");
     }
     const content = contentResponse.content;
-    console.log("内容生成完成");
     debugResults.push({ label: '主内容', value: content });
     currentStage.value = '正在分割内容';
 
     // 4. 调用内容分割接口
-    console.log("开始分割内容...");
     const sectionsParams: SectionsRequestParams = {
       content: content,
       num_sections: formData.value.numSections,
     };
     const sectionsResponse = await splitContentIntoSections(sectionsParams);
-    
-    // 检查 sectionsResponse 和 sections 属性是否存在且为数组
     if (!sectionsResponse || !Array.isArray(sectionsResponse.sections) || sectionsResponse.sections.length === 0) {
        throw new Error("从后端分割内容失败或内容片段为空。");
     }
     const textSections = sectionsResponse.sections;
-    console.log("内容分割完成，共", textSections.length, "段");
     debugResults.push({ label: '分段内容', value: JSON.stringify(textSections, null, 2) });
     currentStage.value = '正在生成内容区块HTML';
 
     // 5. 遍历内容片段，调用生成单个内容区块HTML接口
-    console.log("开始生成内容区块HTML...");
     let sectionHtmlArr: string[] = [];
     for (const section of textSections) {
       const sectionHtmlParams: SectionHTMLRequestParams = {
@@ -269,25 +256,24 @@ const handleGenerateHtml = async () => {
       try {
         const sectionHtmlResponse = await generateSectionHtml(sectionHtmlParams);
         if (sectionHtmlResponse && sectionHtmlResponse.html) {
-          htmlStore.addHtmlSection(sectionHtmlResponse.html);
-          console.log("生成一个内容区块HTML");
-          sectionHtmlArr.push(sectionHtmlResponse.html);
+          // 去除markdown代码块包裹
+          let html = sectionHtmlResponse.html.replace(/```html[\s\S]*?<html.*?>|```/gi, '').trim();
+          htmlStore.addHtmlSection(html);
+          sectionHtmlArr.push('已生成');
         } else {
-          console.warn("生成一个内容区块HTML失败或HTML为空，跳过此段。");
+          sectionHtmlArr.push('生成失败');
         }
       } catch (err) {
-        console.error('生成内容区块HTML失败:', err);
+        sectionHtmlArr.push('生成失败');
       }
     }
     if (htmlStore.htmlSections.length === 0) {
       throw new Error("所有内容区块HTML生成失败或为空。");
     }
-    console.log("所有内容区块HTML生成完成");
     debugResults.push({ label: '区块HTML', value: sectionHtmlArr.join('\n\n') });
     currentStage.value = '正在构建最终HTML';
 
     // 6. 调用构建最终HTML接口 (处理SSE流)
-    console.log("开始构建最终HTML...");
     const buildParams: BuildRequestParams = {
       title: title,
       css_style: css_style,
@@ -303,13 +289,11 @@ const handleGenerateHtml = async () => {
       () => {
         // 流结束时
         isGenerating.value = false;
-        console.log("最终HTML构建完成");
-        debugResults.push({ label: '最终HTML', value: fullGeneratedHtml.value });
+        debugResults.push({ label: '最终HTML', value: '已生成' });
         currentStage.value = '';
       },
       (error) => {
         // 发生错误时
-        console.error("构建最终HTML失败:", error);
         alert(`构建失败: ${error.message || error}`); // 改进错误提示
         isGenerating.value = false;
         currentStage.value = '';
@@ -317,7 +301,6 @@ const handleGenerateHtml = async () => {
     );
 
   } catch (error: any) {
-    console.error("生成HTML流程失败:", error);
     alert(`生成失败: ${error.message || error}`); // 改进错误提示
     isGenerating.value = false;
     currentStage.value = '';
