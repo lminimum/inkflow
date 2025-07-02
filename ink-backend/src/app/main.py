@@ -12,6 +12,7 @@ import json
 from dotenv import load_dotenv
 from src.services.html_creator import HTMLCreator # Keep HTMLCreator factory
 import uuid
+from src.services.hotspot_service import HotspotService
 
 # Import new generator classes
 from src.services.html_generation.title_generator import TitleGenerator
@@ -111,6 +112,10 @@ class HtmlToImageRequest(BaseModel):
     height: int = 667
     full_page: bool = False
     wait_time: float = 1.0
+
+class HotspotAnalyzeRequest(BaseModel):
+    ai_service: Optional[str] = None
+    ai_model: Optional[str] = None
 
 @app.get("/")
 async def read_root():
@@ -293,6 +298,29 @@ async def html_to_image(request: HtmlToImageRequest, background_tasks: Backgroun
         return {"success": True, "output_path": request.output_path or request.html_path.replace('.html', '.png')}
     else:
         return {"success": False, "msg": "截图失败"}
+
+@app.get("/api/hotspots")
+async def get_hotspots():
+    """获取当前热点榜单"""
+    try:
+        service = HotspotService()
+        hotspots = service.fetch_all_hotspots()
+        return {"hotspots": hotspots}
+    except Exception as e:
+        logger.error(f"获取热点失败: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"获取热点失败: {str(e)}")
+
+@app.post("/api/hotspots/analyze")
+async def analyze_hotspots(request: HotspotAnalyzeRequest):
+    """AI分析当前热点榜单"""
+    try:
+        service = HotspotService()
+        hotspots = service.fetch_all_hotspots()
+        report = service.analyze_hotspots(hotspots, ai_service=request.ai_service or None, ai_model=request.ai_model or None)
+        return {"report": report}
+    except Exception as e:
+        logger.error(f"热点分析失败: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"热点分析失败: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn

@@ -38,5 +38,9 @@
       "api_key_required": true,
       "api_key": "sk-1f420baab5a04cea9559eaf6f23ba8f9"
     }
+  ],
+  "hotspot_sources": [
+    {"name": "baidu", "type": "baidu"},
+    {"name": "weibo", "type": "weibo"}
   ]
 }
