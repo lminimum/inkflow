@@ -20,9 +20,7 @@
           <!-- 限定内容区域大小，内容自适应缩放 -->
           <HtmlSectionPager :sections="htmlSections" />
         </div>
-        <!-- 保留这个段落用于没有内容时的提示 -->
-        <p v-if="!htmlSections.length" class="empty-hint">生成的HTML将显示在这里...</p>
-      </div>
+       </div>
 
       <!-- 右侧表单区 -->
       <div class="form-section">
@@ -57,7 +55,9 @@
                 >
                   {{ option.label }}
                 </option>
+                <option value="custom">自定义</option>
               </select>
+              <input v-if="formData.style==='custom'" v-model="formData.customStyle" placeholder="请输入自定义风格" class="form-custom-input" />
             </div>
             <div class="form-group">
               <label for="audience">受众</label>
@@ -75,7 +75,13 @@
                 >
                   {{ option.label }}
                 </option>
+                <option value="custom">自定义</option>
               </select>
+              <input v-if="formData.audience==='custom'" v-model="formData.customAudience" placeholder="请输入自定义受众" class="form-custom-input" />
+            </div>
+            <div class="form-group">
+              <label for="numSections">生成数量</label>
+              <input type="number" id="numSections" v-model.number="formData.numSections" min="1" max="20" required style="width: 100px;" />
             </div>
             <button type="submit" class="generate-btn" :disabled="isGenerating">
               <template v-if="isGenerating">生成中...</template>
@@ -83,16 +89,25 @@
             </button>
           </form>
         </div>
+        <!-- 调试信息区 -->
+        <div class="debug-info">
+          <h4>生成信息</h4>
+          <div v-if="currentStage" class="debug-stage">当前阶段：{{ currentStage }}</div>
+          <div v-for="(item, idx) in debugResults" :key="idx" class="debug-result">
+            <div class="debug-label">{{ item.label }}：</div>
+            <pre class="debug-value">{{ item.value }}</pre>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, reactive } from "vue";
 import { storeToRefs } from 'pinia';
 import { useHtmlStore } from '../store/htmlStore';
-import HtmlSectionPager from '../components/HtmlSectionPager.vue'; // 添加这一行
+import HtmlSectionPager from '../components/HtmlSectionPager.vue';
 // ...其他导入
 import { 
   generateTitle, 
@@ -118,6 +133,9 @@ const formData = ref({
   theme: "",
   style: "",
   audience: "",
+  numSections: 1,
+  customStyle: "",
+  customAudience: ""
 });
 
 const styleOptions = ref([
@@ -143,6 +161,10 @@ const { htmlSections } = storeToRefs(htmlStore);
 // 用于存储完整的HTML，用于复制和预览
 const fullGeneratedHtml = ref('');
 
+// 调试信息相关
+const currentStage = ref('');
+const debugResults = reactive<Array<{ label: string, value: string }>>([]);
+
 // 生成HTML
 const handleGenerateHtml = async () => {
   // 表单验证
@@ -154,13 +176,23 @@ const handleGenerateHtml = async () => {
     alert("请填写所有必填字段");
     return;
   }
+  // 处理自定义风格/受众
+  let style = formData.value.style === 'custom' ? formData.value.customStyle : formData.value.style;
+  let audience = formData.value.audience === 'custom' ? formData.value.customAudience : formData.value.audience;
+
   isGenerating.value = true;
   htmlStore.clearHtml();
-  fullGeneratedHtml.value = ''; // 清空完整HTML
+  fullGeneratedHtml.value = '';
+  debugResults.length = 0;
+  currentStage.value = '正在生成标题';
   try {
     // 1. 调用生成标题接口
     console.log("开始生成标题...");
-    const titleParams: HTMLGenerateParams = formData.value;
+    const titleParams: HTMLGenerateParams = {
+      ...formData.value,
+      style,
+      audience
+    };
     const titleResponse = await generateTitle(titleParams);
     
     // 检查 titleResponse 和 title 属性是否存在
@@ -169,10 +201,16 @@ const handleGenerateHtml = async () => {
     }
     const title = titleResponse.title;
     console.log("标题生成完成:", title);
+    debugResults.push({ label: '标题', value: title });
+    currentStage.value = '正在生成CSS';
 
     // 2. 调用生成CSS接口
     console.log("开始生成CSS...");
-    const cssParams: HTMLGenerateParams = formData.value;
+    const cssParams: HTMLGenerateParams = {
+      ...formData.value,
+      style,
+      audience
+    };
     const cssResponse = await generateCss(cssParams);
     
     // 检查 cssResponse 和 css_style 属性是否存在
@@ -181,12 +219,15 @@ const handleGenerateHtml = async () => {
     }
     const css_style = cssResponse.css_style;
     console.log("CSS生成完成:", css_style);
+    currentStage.value = '正在生成内容';
 
     // 3. 调用生成内容接口
     console.log("开始生成内容...");
     const contentParams: ContentRequestParams = {
       title: title,
-      ...formData.value, // theme, style, audience
+      theme: formData.value.theme,
+      style,
+      audience
     };
     const contentResponse = await generateContent(contentParams);
     
@@ -196,12 +237,14 @@ const handleGenerateHtml = async () => {
     }
     const content = contentResponse.content;
     console.log("内容生成完成");
+    debugResults.push({ label: '主内容', value: content });
+    currentStage.value = '正在分割内容';
 
     // 4. 调用内容分割接口
     console.log("开始分割内容...");
     const sectionsParams: SectionsRequestParams = {
       content: content,
-      num_sections: 5, // 暂时固定分割成5段，后续可以考虑用户输入或动态计算
+      num_sections: formData.value.numSections,
     };
     const sectionsResponse = await splitContentIntoSections(sectionsParams);
     
@@ -211,9 +254,12 @@ const handleGenerateHtml = async () => {
     }
     const textSections = sectionsResponse.sections;
     console.log("内容分割完成，共", textSections.length, "段");
+    debugResults.push({ label: '分段内容', value: JSON.stringify(textSections, null, 2) });
+    currentStage.value = '正在生成内容区块HTML';
 
     // 5. 遍历内容片段，调用生成单个内容区块HTML接口
     console.log("开始生成内容区块HTML...");
+    let sectionHtmlArr: string[] = [];
     for (const section of textSections) {
       const sectionHtmlParams: SectionHTMLRequestParams = {
         title: title,
@@ -225,6 +271,7 @@ const handleGenerateHtml = async () => {
         if (sectionHtmlResponse && sectionHtmlResponse.html) {
           htmlStore.addHtmlSection(sectionHtmlResponse.html);
           console.log("生成一个内容区块HTML");
+          sectionHtmlArr.push(sectionHtmlResponse.html);
         } else {
           console.warn("生成一个内容区块HTML失败或HTML为空，跳过此段。");
         }
@@ -236,6 +283,8 @@ const handleGenerateHtml = async () => {
       throw new Error("所有内容区块HTML生成失败或为空。");
     }
     console.log("所有内容区块HTML生成完成");
+    debugResults.push({ label: '区块HTML', value: sectionHtmlArr.join('\n\n') });
+    currentStage.value = '正在构建最终HTML';
 
     // 6. 调用构建最终HTML接口 (处理SSE流)
     console.log("开始构建最终HTML...");
@@ -255,12 +304,15 @@ const handleGenerateHtml = async () => {
         // 流结束时
         isGenerating.value = false;
         console.log("最终HTML构建完成");
+        debugResults.push({ label: '最终HTML', value: fullGeneratedHtml.value });
+        currentStage.value = '';
       },
       (error) => {
         // 发生错误时
         console.error("构建最终HTML失败:", error);
         alert(`构建失败: ${error.message || error}`); // 改进错误提示
         isGenerating.value = false;
+        currentStage.value = '';
       }
     );
 
@@ -268,6 +320,7 @@ const handleGenerateHtml = async () => {
     console.error("生成HTML流程失败:", error);
     alert(`生成失败: ${error.message || error}`); // 改进错误提示
     isGenerating.value = false;
+    currentStage.value = '';
   }
 };
 
@@ -302,7 +355,7 @@ onMounted(() => {
   padding: 1.5rem;
   max-width: 1400px;
   margin: 0 auto;
-  height: calc(100vh - 108px);
+  min-height: calc(100vh - 108px);
   display: flex;
   flex-direction: column;
   background-color: var(--bg-color);
@@ -378,19 +431,11 @@ onMounted(() => {
 .display-content {
   flex: 1;
   padding: 1.5rem;
-  overflow-y: hidden; /* 禁用垂直滚动 */
-  overflow-x: auto; /* 启用水平滚动 */
+  overflow: visible;
   background: white;
   color: black;
   min-height: 300px;
-  white-space: nowrap; /* 防止内容换行 */
-}
-
-.empty-hint {
-  color: var(--text-secondary);
-  text-align: center;
-  margin-top: 2rem;
-  font-style: italic;
+  white-space: nowrap; 
 }
 
 .form-section {
@@ -477,5 +522,52 @@ onMounted(() => {
   box-shadow: 0 2px 8px 0 rgba(0,0,0,0.04);
   min-height: 200px;
   overflow-x: auto; /* 允许单个 section 内部滚动 */
+}
+
+.debug-info {
+  background: #f7f7f7;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  margin: 1.5rem 0 0 0;
+  padding: 1rem;
+  font-size: 0.95rem;
+  color: #333;
+  max-height: 350px;
+  overflow: auto;
+}
+
+.debug-stage {
+  color: #1976d2;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.debug-result {
+  margin-bottom: 0.5rem;
+}
+
+.debug-label {
+  font-weight: bold;
+  color: #555;
+}
+
+.debug-value {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  padding: 0.5em;
+  font-family: monospace;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.form-custom-input {
+  margin-top: 0.5rem;
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
 }
 </style>

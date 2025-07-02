@@ -1,5 +1,5 @@
-import {  type Message } from '../types';
-import {apiClient} from './client';
+import { type Message } from '../types';
+import { apiClient } from './client';
 
 /**
  * 调用AI生成接口
@@ -12,19 +12,19 @@ export const generateContent = async (messages: Message[], model: string = 'deep
   console.log('generateContent', messages, model, service);
   try {
     const response = await apiClient.post('/generate', {
-        messages,
-        model,
-        service
+      messages,
+      model,
+      service
     }, { timeout: 30000 });
     return response;
   } catch (error: any) {
-      let errorMessage = '生成内容失败';
-      if (error.response && error.response.data && error.response.data.detail) {
-        errorMessage += `: ${error.response.data.detail}`;
-      } else if (error.message) {
-        errorMessage += `: ${error.message}`;
-      }
-      console.error(errorMessage);
-      throw new Error(errorMessage);
+    let errorMessage = '生成内容失败';
+    if (error.response && error.response.data && error.response.data.detail) {
+      errorMessage += `: ${error.response.data.detail}`;
+    } else if (error.message) {
+      errorMessage += `: ${error.message}`;
     }
+    console.error(errorMessage);
+    throw new Error(errorMessage);
+  }
 };
