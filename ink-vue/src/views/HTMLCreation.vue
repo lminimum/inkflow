@@ -119,12 +119,10 @@ import {
   generateContent, 
   splitContentIntoSections, 
   generateSectionHtml, 
-  buildFinalHtml, 
   type HTMLGenerateParams, 
   type ContentRequestParams,
   type SectionsRequestParams,
   type SectionHTMLRequestParams,
-  type BuildRequestParams 
 } from "../api/htmlGenerate";
 import {
   ExportOutlined,
@@ -275,32 +273,10 @@ const handleGenerateHtml = async () => {
     debugResults.push({ label: '区块HTML', value: sectionHtmlArr.join('\n\n') });
     currentStage.value = '正在构建最终HTML';
 
-    // 6. 调用构建最终HTML接口 (处理SSE流)
-    const buildParams: BuildRequestParams = {
-      title: title,
-      css_style: css_style,
-      sections: htmlStore.htmlSections.map(s => s.html) // 只传 string[]
-    };
-
-    buildFinalHtml(
-      buildParams,
-      (chunk) => {
-        // 接收到HTML片段时，追加到本地变量
-        fullGeneratedHtml.value += chunk;
-      },
-      () => {
-        // 流结束时
-        isGenerating.value = false;
-        debugResults.push({ label: '最终HTML', value: '已生成' });
-        currentStage.value = '';
-      },
-      (error) => {
-        // 发生错误时
-        alert(`构建失败: ${error.message || error}`); // 改进错误提示
-        isGenerating.value = false;
-        currentStage.value = '';
-      }
-    );
+    // 6. 不再拼接完整 HTML，直接结束
+    isGenerating.value = false;
+    debugResults.push({ label: '最终HTML', value: '已生成' });
+    currentStage.value = '';
 
   } catch (error: any) {
     alert(`生成失败: ${error.message || error}`); // 改进错误提示

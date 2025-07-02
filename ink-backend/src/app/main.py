@@ -213,41 +213,6 @@ async def split_html_content(request: SectionsRequest):
         logger.error(f"分割内容失败: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"分割内容失败: {str(e)}")
 
-@app.post("/api/generate-html/build")
-async def build_final_html(request: BuildRequest):
-    import time
-    async def event_generator():
-        try:
-            creator = HTMLCreator()
-            html_builder = creator.get_html_builder()
-            async with html_builder:
-                # Assuming sections are already the HTML snippets for each part
-                async for chunk in html_builder.stream_final_html(
-                    title=request.title,
-                    css_style=request.css_style,
-                    sections=request.sections # Pass pre-generated sections
-                ):
-                    # Decode chunk if it's bytes before JSON serialization
-                    chunk_str = chunk.decode() if isinstance(chunk, bytes) else chunk
-                    yield f"data: {{\"type\": \"chunk\", \"content\": {json.dumps(chunk_str)} }}\n\n"
-                    await asyncio.sleep(0.01) # Adjust stream rate if needed
-                # Send completion signal
-                yield f"data: {{\"type\": \"done\", \"content\": \"\"}}\n\n"
-        except Exception as e:
-            error_msg = f"构建HTML失败: {str(e)}"
-            logger.error(error_msg, exc_info=True)
-            yield f"data: {{\"type\": \"error\", \"content\": {json.dumps(error_msg)} }}\n\n"
-
-    return StreamingResponse(
-        event_generator(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no"
-        }
-    )
-
 # Add new endpoint for generating HTML for a single section
 @app.post("/api/generate-html/section_html")
 async def generate_html_section(request: SectionHTMLRequest):

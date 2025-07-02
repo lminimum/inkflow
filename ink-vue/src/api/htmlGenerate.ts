@@ -81,8 +81,6 @@ export interface BuildRequestParams {
   sections: string[]; // HTML内容片段列表 (由 generateSectionHtml 生成)
 }
 
-// 移除旧的 HTMLGenerateResponse 接口和 generateHtml 函数
-
 /**
  * 调用生成标题接口
  * @param params 生成参数 (theme, style, audience)
@@ -204,85 +202,4 @@ export const generateSectionHtml = async (params: SectionHTMLRequestParams): Pro
   } catch (error: any) {
     throw error;
   }
-};
-
-/**
- * 调用构建最终HTML接口 (处理SSE流)
- * @param params 构建参数 (title, css_style, sections)
- * @param onChunk 接收到HTML片段时的回调函数
- * @param onDone 流结束时的回调函数
- * @param onError 发生错误时的回调函数
- */
-export const buildFinalHtml = (
-  params: BuildRequestParams,
-  onChunk: (chunk: string) => void,
-  onDone: () => void,
-  onError: (error: any) => void
-) => {
-  console.log('构建最终HTML参数:', params);
-
-  // 使用 fetch API 处理 SSE 流
-  fetch('/api/generate-html/build', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(params),
-  })
-    .then(async (response) => {
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || '构建HTML失败');
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('无法获取响应读取器');
-      }
-
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      const processChunk = async ({ done, value }: ReadableStreamReadResult<Uint8Array>) => {
-        if (done) {
-          onDone();
-          return;
-        }
-
-        buffer += decoder.decode(value, { stream: true });
-
-        // 处理可能包含多个事件的缓冲区
-        const events = buffer.split('\n\n');
-        buffer = events.pop() || ''; // 保留最后一个不完整的事件
-
-        for (const event of events) {
-          if (event.startsWith('data: ')) {
-            try {
-              const jsonString = event.substring(6);
-              const data = JSON.parse(jsonString);
-              if (data.type === 'chunk') {
-                onChunk(data.content);
-              } else if (data.type === 'done') {
-                onDone();
-                return; // 结束处理
-              } else if (data.type === 'error') {
-                onError(new Error(data.content));
-                return; // 结束处理
-              }
-            } catch (e) {
-              console.error('解析SSE数据失败:', e);
-              onError(e);
-              return; // 结束处理
-            }
-          }
-        }
-
-        // 继续读取下一个块
-        reader.read().then(processChunk).catch(onError);
-      };
-
-      // 开始读取流
-      reader.read().then(processChunk).catch(onError);
-    })
-    .catch(onError);
 };
