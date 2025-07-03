@@ -73,7 +73,8 @@ const close = (): void => window.electronAPI?.close()
 // Tab配置
 const tabs = [
   { label: '主页', key: 'home', route: '/' },
-  { label: '模型', key: 'models', route: '/models' }
+  { label: '模型', key: 'models', route: '/models' },
+  { label: '预发布', key: 'prepublish', route: '/prepublish' }
 ]
 
 // Tab状态管理
@@ -91,7 +92,8 @@ const switchTab = (tab: string): void => {
 const creationNavItems = [
   { to: '/', icon: HomeOutlined },
   { to: '/ai-creation', icon: EditOutlined },
-  { to: '/html-creation', icon: BuildOutlined }
+  { to: '/html-creation', icon: BuildOutlined },
+  { to: '/prepublish', icon: BorderOutlined }
 ]
 
 const modelNavItems = [{ to: '/models', icon: DatabaseOutlined }]

@@ -10,6 +10,13 @@
             <button class="action-btn" @click="copyHtml"><CopyOutlined /> 复制HTML</button>
             <button class="action-btn" @click="previewInNewTab"><EyeOutlined /> 新窗口预览</button>
             <button class="action-btn"><ExportOutlined /> 导出</button>
+            <button
+              v-if="htmlStore.htmlSections.length > 0"
+              class="action-btn"
+              @click="goToPrePublish"
+            >
+              去预发布
+            </button>
           </div>
         </div>
         <div
@@ -134,7 +141,7 @@ import { ref, onMounted, reactive } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useHtmlStore } from '../store/htmlStore'
 import HtmlSectionPager from '../components/HtmlSectionPager.vue'
-// ...其他导入
+import { useRouter } from 'vue-router'
 import {
   generateTitle,
   generateCss,
@@ -147,6 +154,8 @@ import {
   type SectionHTMLRequestParams
 } from '../api/htmlGenerate'
 import { ExportOutlined, CopyOutlined, EyeOutlined } from '@ant-design/icons-vue'
+
+const router = useRouter()
 
 // 表单数据
 const formData = ref({
@@ -319,6 +328,19 @@ const previewInNewTab = (): void => {
     newWindow.document.write(fullGeneratedHtml.value)
     newWindow.document.close()
   }
+}
+
+const goToPrePublish = (): void => {
+  // 取第一个区块的 file_path 作为 html 路径，主题文案用 formData.value.theme
+  const htmlPath = htmlStore.htmlSections[0]?.file_path || ''
+  const theme = formData.value.theme
+  router.push({
+    path: '/prepublish',
+    query: {
+      html_path: htmlPath,
+      theme: theme
+    }
+  })
 }
 
 // 页面初始化时恢复内容 (如果需要)

@@ -30,6 +30,12 @@ export default createRouter({
       name: 'ModelList',
       component: ModelList,
       meta: { title: '模型列表' }
+    },
+    {
+      path: '/prepublish',
+      name: 'PrePublish',
+      component: () => import('@renderer/views/PrePublish.vue'),
+      meta: { title: '预发布' }
     }
   ]
 })

@@ -1,3 +1,10 @@
+import sys
+import asyncio
+
+if sys.platform.startswith('win'):
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+
+# 其余 import ...
 import os
 import logging
 from logging.handlers import RotatingFileHandler
