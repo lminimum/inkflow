@@ -7,20 +7,30 @@
         <div class="display-header">
           <h2>图文预览</h2>
           <div class="display-actions">
-            <button class="action-btn" @click="copyHtml">
-              <CopyOutlined /> 复制HTML
-            </button>
-            <button class="action-btn" @click="previewInNewTab">
-              <EyeOutlined /> 新窗口预览
-            </button>
+            <button class="action-btn" @click="copyHtml"><CopyOutlined /> 复制HTML</button>
+            <button class="action-btn" @click="previewInNewTab"><EyeOutlined /> 新窗口预览</button>
             <button class="action-btn"><ExportOutlined /> 导出</button>
           </div>
         </div>
-        <div class="display-content" style="display: flex; justify-content: center; align-items: center; height: 420px; max-width: 700px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px 0 rgba(0,0,0,0.04); overflow: hidden;">
+        <div
+          class="display-content"
+          style="
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 420px;
+            max-width: 700px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+          "
+        >
           <!-- 限定内容区域大小，内容自适应缩放 -->
           <HtmlSectionPager :sections="htmlSections" />
         </div>
-       </div>
+      </div>
 
       <!-- 右侧表单区 -->
       <div class="form-section">
@@ -41,47 +51,47 @@
             </div>
             <div class="form-group">
               <label for="style">风格</label>
-              <select
-                id="style"
-                v-model="formData.style"
-                required
-                class="form-select"
-              >
+              <select id="style" v-model="formData.style" required class="form-select">
                 <option value="">请选择风格</option>
-                <option
-                  v-for="option in styleOptions"
-                  :key="option.value"
-                  :value="option.value"
-                >
+                <option v-for="option in styleOptions" :key="option.value" :value="option.value">
                   {{ option.label }}
                 </option>
                 <option value="custom">自定义</option>
               </select>
-              <input v-if="formData.style==='custom'" v-model="formData.customStyle" placeholder="请输入自定义风格" class="form-custom-input" />
+              <input
+                v-if="formData.style === 'custom'"
+                v-model="formData.customStyle"
+                placeholder="请输入自定义风格"
+                class="form-custom-input"
+              />
             </div>
             <div class="form-group">
               <label for="audience">受众</label>
-              <select
-                id="audience"
-                v-model="formData.audience"
-                required
-                class="form-select"
-              >
+              <select id="audience" v-model="formData.audience" required class="form-select">
                 <option value="">请选择受众</option>
-                <option
-                  v-for="option in audienceOptions"
-                  :key="option.value"
-                  :value="option.value"
-                >
+                <option v-for="option in audienceOptions" :key="option.value" :value="option.value">
                   {{ option.label }}
                 </option>
                 <option value="custom">自定义</option>
               </select>
-              <input v-if="formData.audience==='custom'" v-model="formData.customAudience" placeholder="请输入自定义受众" class="form-custom-input" />
+              <input
+                v-if="formData.audience === 'custom'"
+                v-model="formData.customAudience"
+                placeholder="请输入自定义受众"
+                class="form-custom-input"
+              />
             </div>
             <div class="form-group">
               <label for="numSections">生成数量</label>
-              <input type="number" id="numSections" v-model.number="formData.numSections" min="1" max="20" required style="width: 100px;" />
+              <input
+                type="number"
+                id="numSections"
+                v-model.number="formData.numSections"
+                min="1"
+                max="20"
+                required
+                style="width: 100px"
+              />
             </div>
             <button type="submit" class="generate-btn" :disabled="isGenerating">
               <template v-if="isGenerating">生成中...</template>
@@ -93,11 +103,23 @@
         <div class="debug-info">
           <h4>生成信息</h4>
           <div v-if="currentStage" class="debug-stage">当前阶段：{{ currentStage }}</div>
-          <div v-for="(item, idx) in debugResults.filter(i => i.label !== 'CSS' && i.label !== '区块HTML' && i.label !== '最终HTML')" :key="idx" class="debug-result">
+          <div
+            v-for="(item, idx) in debugResults.filter(
+              (i) => i.label !== 'CSS' && i.label !== '区块HTML' && i.label !== '最终HTML'
+            )"
+            :key="idx"
+            class="debug-result"
+          >
             <div class="debug-label">{{ item.label }}：</div>
             <pre class="debug-value">{{ item.value }}</pre>
           </div>
-          <div v-for="(item, idx) in debugResults.filter(i => i.label === '区块HTML' || i.label === '最终HTML')" :key="'html-' + idx" class="debug-result">
+          <div
+            v-for="(item, idx) in debugResults.filter(
+              (i) => i.label === '区块HTML' || i.label === '最终HTML'
+            )"
+            :key="'html-' + idx"
+            class="debug-result"
+          >
             <div class="debug-label">{{ item.label }}：</div>
             <pre class="debug-value">已生成</pre>
           </div>
@@ -108,112 +130,105 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from "vue";
-import { storeToRefs } from 'pinia';
-import { useHtmlStore, type HtmlSectionItem } from '../store/htmlStore';
-import HtmlSectionPager from '../components/HtmlSectionPager.vue';
+import { ref, onMounted, reactive } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useHtmlStore, type HtmlSectionItem } from '../store/htmlStore'
+import HtmlSectionPager from '../components/HtmlSectionPager.vue'
 // ...其他导入
-import { 
-  generateTitle, 
-  generateCss, 
-  generateContent, 
-  splitContentIntoSections, 
-  generateSectionHtml, 
-  type HTMLGenerateParams, 
+import {
+  generateTitle,
+  generateCss,
+  generateContent,
+  splitContentIntoSections,
+  generateSectionHtml,
+  type HTMLGenerateParams,
   type ContentRequestParams,
   type SectionsRequestParams,
-  type SectionHTMLRequestParams,
-} from "../api/htmlGenerate";
-import {
-  ExportOutlined,
-  CopyOutlined,
-  EyeOutlined,
-} from "@ant-design/icons-vue";
+  type SectionHTMLRequestParams
+} from '../api/htmlGenerate'
+import { ExportOutlined, CopyOutlined, EyeOutlined } from '@ant-design/icons-vue'
 
 // 表单数据
 const formData = ref({
-  theme: "",
-  style: "",
-  audience: "",
+  theme: '',
+  style: '',
+  audience: '',
   numSections: 1,
-  customStyle: "",
-  customAudience: ""
-});
+  customStyle: '',
+  customAudience: ''
+})
 
 const styleOptions = ref([
-  { value: "modern", label: "现代" },
-  { value: "minimalist", label: "简约" },
-  { value: "retro", label: "复古" },
-  { value: "professional", label: "专业" },
-  { value: "creative", label: "创意" },
-]);
+  { value: 'modern', label: '现代' },
+  { value: 'minimalist', label: '简约' },
+  { value: 'retro', label: '复古' },
+  { value: 'professional', label: '专业' },
+  { value: 'creative', label: '创意' }
+])
 
 const audienceOptions = ref([
-  { value: "children", label: "儿童" },
-  { value: "teenagers", label: "青少年" },
-  { value: "adults", label: "成人" },
-  { value: "professionals", label: "专业人士" },
-]);
+  { value: 'children', label: '儿童' },
+  { value: 'teenagers', label: '青少年' },
+  { value: 'adults', label: '成人' },
+  { value: 'professionals', label: '专业人士' }
+])
 
 // 生成状态
-const isGenerating = ref(false);
-const htmlStore = useHtmlStore();
-const { htmlSections } = storeToRefs(htmlStore);
+const isGenerating = ref(false)
+const htmlStore = useHtmlStore()
+const { htmlSections } = storeToRefs(htmlStore)
 
 // 用于存储完整的HTML，用于复制和预览
-const fullGeneratedHtml = ref('');
+const fullGeneratedHtml = ref('')
 
 // 调试信息相关
-const currentStage = ref('');
-const debugResults = reactive<Array<{ label: string, value: string }>>([]);
+const currentStage = ref('')
+const debugResults = reactive<Array<{ label: string; value: string }>>([])
 
 // 生成HTML
 const handleGenerateHtml = async () => {
   // 表单验证
-  if (
-    !formData.value.theme ||
-    !formData.value.style ||
-    !formData.value.audience
-  ) {
-    alert("请填写所有必填字段");
-    return;
+  if (!formData.value.theme || !formData.value.style || !formData.value.audience) {
+    alert('请填写所有必填字段')
+    return
   }
   // 处理自定义风格/受众
-  let style = formData.value.style === 'custom' ? formData.value.customStyle : formData.value.style;
-  let audience = formData.value.audience === 'custom' ? formData.value.customAudience : formData.value.audience;
+  let style = formData.value.style === 'custom' ? formData.value.customStyle : formData.value.style
+  let audience =
+    formData.value.audience === 'custom' ? formData.value.customAudience : formData.value.audience
 
-  isGenerating.value = true;
-  htmlStore.clearHtml();
-  fullGeneratedHtml.value = '';
-  debugResults.length = 0;
-  currentStage.value = '正在生成标题';
+  isGenerating.value = true
+  htmlStore.clearHtml()
+  fullGeneratedHtml.value = ''
+  debugResults.length = 0
+  currentStage.value = '正在生成标题'
   try {
     // 1. 调用生成标题接口
     const titleParams: HTMLGenerateParams = {
       ...formData.value,
       style,
       audience
-    };
-    const titleResponse = await generateTitle(titleParams);
-    if (!titleResponse || !titleResponse.title) {
-      throw new Error("从后端获取标题失败或标题为空。");
     }
-    const title = titleResponse.title;
-    debugResults.push({ label: '标题', value: title });
-    currentStage.value = '正在生成CSS';
+    const titleResponse = await generateTitle(titleParams)
+    if (!titleResponse || !titleResponse.title) {
+      throw new Error('从后端获取标题失败或标题为空。')
+    }
+    const title = titleResponse.title
+    debugResults.push({ label: '标题', value: title })
+    currentStage.value = '正在生成CSS'
 
     // 2. 调用生成CSS接口
     const cssParams: HTMLGenerateParams = {
       ...formData.value,
       style,
       audience
-    };
-    const cssResponse = await generateCss(cssParams);
-    if (!cssResponse || !cssResponse.css_style) {
-      throw new Error("从后端获取CSS失败或CSS为空。");
     }
-    const css_style = cssResponse.css_style;
-    currentStage.value = '正在生成内容';
+    const cssResponse = await generateCss(cssParams)
+    if (!cssResponse || !cssResponse.css_style) {
+      throw new Error('从后端获取CSS失败或CSS为空。')
+    }
+    const css_style = cssResponse.css_style
+    currentStage.value = '正在生成内容'
 
     // 3. 调用生成内容接口
     const contentParams: ContentRequestParams = {
@@ -221,94 +236,96 @@ const handleGenerateHtml = async () => {
       theme: formData.value.theme,
       style,
       audience
-    };
-    const contentResponse = await generateContent(contentParams);
-    if (!contentResponse || !contentResponse.content) {
-      throw new Error("从后端获取内容失败或内容为空。");
     }
-    const content = contentResponse.content;
-    debugResults.push({ label: '主内容', value: content });
-    currentStage.value = '正在分割内容';
+    const contentResponse = await generateContent(contentParams)
+    if (!contentResponse || !contentResponse.content) {
+      throw new Error('从后端获取内容失败或内容为空。')
+    }
+    const content = contentResponse.content
+    debugResults.push({ label: '主内容', value: content })
+    currentStage.value = '正在分割内容'
 
     // 4. 调用内容分割接口
     const sectionsParams: SectionsRequestParams = {
       content: content,
-      num_sections: formData.value.numSections,
-    };
-    const sectionsResponse = await splitContentIntoSections(sectionsParams);
-    if (!sectionsResponse || !Array.isArray(sectionsResponse.sections) || sectionsResponse.sections.length === 0) {
-       throw new Error("从后端分割内容失败或内容片段为空。");
+      num_sections: formData.value.numSections
     }
-    const textSections = sectionsResponse.sections;
-    debugResults.push({ label: '分段内容', value: JSON.stringify(textSections, null, 2) });
-    currentStage.value = '正在生成内容区块HTML';
+    const sectionsResponse = await splitContentIntoSections(sectionsParams)
+    if (
+      !sectionsResponse ||
+      !Array.isArray(sectionsResponse.sections) ||
+      sectionsResponse.sections.length === 0
+    ) {
+      throw new Error('从后端分割内容失败或内容片段为空。')
+    }
+    const textSections = sectionsResponse.sections
+    debugResults.push({ label: '分段内容', value: JSON.stringify(textSections, null, 2) })
+    currentStage.value = '正在生成内容区块HTML'
 
     // 5. 遍历内容片段，调用生成单个内容区块HTML接口
-    let sectionHtmlArr: string[] = [];
+    let sectionHtmlArr: string[] = []
     for (const section of textSections) {
       const sectionHtmlParams: SectionHTMLRequestParams = {
         title: title,
         description: section,
-        css_style: css_style,
-      };
+        css_style: css_style
+      }
       try {
-        const sectionHtmlResponse = await generateSectionHtml(sectionHtmlParams);
+        const sectionHtmlResponse = await generateSectionHtml(sectionHtmlParams)
         if (sectionHtmlResponse && sectionHtmlResponse.html) {
           // 存储 html 及 file_path
           htmlStore.addHtmlSection({
             html: sectionHtmlResponse.html,
             file_path: sectionHtmlResponse.file_path
-          });
-          sectionHtmlArr.push('已生成');
+          })
+          sectionHtmlArr.push('已生成')
         } else {
-          sectionHtmlArr.push('生成失败');
+          sectionHtmlArr.push('生成失败')
         }
       } catch (err) {
-        sectionHtmlArr.push('生成失败');
+        sectionHtmlArr.push('生成失败')
       }
     }
     if (htmlStore.htmlSections.length === 0) {
-      throw new Error("所有内容区块HTML生成失败或为空。");
+      throw new Error('所有内容区块HTML生成失败或为空。')
     }
-    debugResults.push({ label: '区块HTML', value: sectionHtmlArr.join('\n\n') });
-    currentStage.value = '正在构建最终HTML';
+    debugResults.push({ label: '区块HTML', value: sectionHtmlArr.join('\n\n') })
+    currentStage.value = '正在构建最终HTML'
 
     // 6. 不再拼接完整 HTML，直接结束
-    isGenerating.value = false;
-    debugResults.push({ label: '最终HTML', value: '已生成' });
-    currentStage.value = '';
-
+    isGenerating.value = false
+    debugResults.push({ label: '最终HTML', value: '已生成' })
+    currentStage.value = ''
   } catch (error: any) {
-    alert(`生成失败: ${error.message || error}`); // 改进错误提示
-    isGenerating.value = false;
-    currentStage.value = '';
+    alert(`生成失败: ${error.message || error}`) // 改进错误提示
+    isGenerating.value = false
+    currentStage.value = ''
   }
-};
+}
 
 // 复制完整HTML到剪贴板
 const copyHtml = () => {
-  if (!fullGeneratedHtml.value) return;
-  navigator.clipboard.writeText(fullGeneratedHtml.value);
-  alert("HTML内容已复制到剪贴板");
-};
+  if (!fullGeneratedHtml.value) return
+  navigator.clipboard.writeText(fullGeneratedHtml.value)
+  alert('HTML内容已复制到剪贴板')
+}
 
 // 在新窗口预览完整HTML
 const previewInNewTab = () => {
-  if (!fullGeneratedHtml.value) return;
-  const newWindow = window.open("", "_blank");
+  if (!fullGeneratedHtml.value) return
+  const newWindow = window.open('', '_blank')
   if (newWindow) {
-    newWindow.document.write(fullGeneratedHtml.value);
-    newWindow.document.close();
+    newWindow.document.write(fullGeneratedHtml.value)
+    newWindow.document.close()
   }
-};
+}
 
 // 页面初始化时恢复内容 (如果需要)
 onMounted(() => {
   // 目前不实现恢复功能，每次进入页面清空
-  htmlStore.clearHtml();
-  fullGeneratedHtml.value = '';
-});
-
+  htmlStore.clearHtml()
+  fullGeneratedHtml.value = ''
+})
 </script>
 
 <style scoped>
@@ -396,7 +413,7 @@ onMounted(() => {
   background: white;
   color: black;
   min-height: 300px;
-  white-space: nowrap; 
+  white-space: nowrap;
 }
 
 .form-section {
@@ -480,7 +497,7 @@ onMounted(() => {
   padding: 1.5rem;
   background: #fff;
   color: #222;
-  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.04);
+  box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.04);
   min-height: 200px;
   overflow-x: auto; /* 允许单个 section 内部滚动 */
 }

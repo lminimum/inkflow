@@ -1,8 +1,6 @@
 <template>
   <div class="pager-container" ref="pagerContainer" v-if="props.sections && props.sections.length">
-    <button class="pager-btn" :disabled="currentIndex === 0" @click="prev">
-      &#8592;
-    </button>
+    <button class="pager-btn" :disabled="currentIndex === 0" @click="prev">&#8592;</button>
     <div class="pager-content">
       <div class="iframe-container" ref="containerRef">
         <div class="iframe-scaler" ref="scalerRef">
@@ -21,7 +19,7 @@
     </div>
     <button
       class="pager-btn"
-      :disabled="!props.sections || currentIndex === (props.sections.length - 1)"
+      :disabled="!props.sections || currentIndex === props.sections.length - 1"
       @click="next"
     >
       &#8594;
@@ -31,75 +29,75 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, watchEffect, onMounted, nextTick } from "vue";
+import { ref, watch, watchEffect, onMounted, nextTick } from 'vue'
 
 interface HtmlSectionItem {
-  html: string;
-  file_path?: string;
+  html: string
+  file_path?: string
 }
 
-const pagerContainer = ref<HTMLElement | null>(null);
+const pagerContainer = ref<HTMLElement | null>(null)
 // import testHtml from "../../../ink-backend/tests/test_outputs/generated_html.html?raw";
-const props = defineProps<{ sections: HtmlSectionItem[] }>();
-const currentIndex = ref(0);
-const currentSection = ref("");
-const iframeRef = ref<HTMLIFrameElement | null>(null);
-const scalerRef = ref<HTMLDivElement | null>(null);
-const containerRef = ref<HTMLDivElement | null>(null);
+const props = defineProps<{ sections: HtmlSectionItem[] }>()
+const currentIndex = ref(0)
+const currentSection = ref('')
+const iframeRef = ref<HTMLIFrameElement | null>(null)
+const scalerRef = ref<HTMLDivElement | null>(null)
+const containerRef = ref<HTMLDivElement | null>(null)
 
 watchEffect(() => {
   if (props.sections && props.sections.length > 0) {
-    currentSection.value = props.sections[currentIndex.value].html;
+    currentSection.value = props.sections[currentIndex.value].html
   } else {
-    currentSection.value = "";
+    currentSection.value = ''
   }
-});
+})
 
 watch(
   () => props.sections?.length ?? 0,
   (len) => {
-    if (currentIndex.value >= len) currentIndex.value = len > 0 ? len - 1 : 0;
+    if (currentIndex.value >= len) currentIndex.value = len > 0 ? len - 1 : 0
   }
-);
+)
 
 const prev = () => {
-  if (currentIndex.value > 0) currentIndex.value--;
-};
+  if (currentIndex.value > 0) currentIndex.value--
+}
 const next = () => {
-  if (props.sections && currentIndex.value < props.sections.length - 1) currentIndex.value++;
-};
+  if (props.sections && currentIndex.value < props.sections.length - 1) currentIndex.value++
+}
 
 // 让iframe高度自适应内容，并同步缩放后高度到外层容器
-const scale = 0.643;
+const scale = 0.643
 const setIframeHeight = () => {
   if (iframeRef.value && scalerRef.value && containerRef.value) {
     try {
-      const iframe = iframeRef.value;
-      const doc = iframe.contentDocument || iframe.contentWindow?.document;
+      const iframe = iframeRef.value
+      const doc = iframe.contentDocument || iframe.contentWindow?.document
       if (doc) {
-        const rawHeight = doc.body.scrollHeight;
-        iframe.style.height = rawHeight + "px";
-        scalerRef.value.style.height = rawHeight + "px";
-        containerRef.value.style.height = rawHeight * scale + "px";
+        const rawHeight = doc.body.scrollHeight
+        iframe.style.height = rawHeight + 'px'
+        scalerRef.value.style.height = rawHeight + 'px'
+        containerRef.value.style.height = rawHeight * scale + 'px'
       }
     } catch (e) {
       // 跨域等异常忽略
     }
   }
-};
+}
 
 watch([currentSection, () => props.sections], async () => {
-  await nextTick();
-  setTimeout(setIframeHeight, 100); // 等待渲染
-});
+  await nextTick()
+  setTimeout(setIframeHeight, 100) // 等待渲染
+})
 
 onMounted(() => {
-  setTimeout(setIframeHeight, 200);
-});
+  setTimeout(setIframeHeight, 200)
+})
 </script>
 
 <script lang="ts">
-export default {};
+export default {}
 </script>
 
 <style scoped>

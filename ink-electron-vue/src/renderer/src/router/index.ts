@@ -1,6 +1,5 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import ModelList from '../views/ModelList.vue';
-
+import { createRouter, createWebHistory } from 'vue-router'
+import ModelList from '../views/ModelList.vue'
 
 export default createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -33,4 +32,4 @@ export default createRouter({
       meta: { title: '模型列表' }
     }
   ]
-});
+})

@@ -16,12 +16,12 @@
 }
 
 /* 暗色主题变量 */
-:root[data-theme="dark"] {
+:root[data-theme='dark'] {
   --primary-color: #40a9ff;
   --primary-hover: #096dd9;
   --primary-light: #0d1117;
   --bg-color: #303030;
-  --card-bg: #2A2A2A;
+  --card-bg: #2a2a2a;
   --text-primary: #e8e8e8;
   --text-secondary: #999999;
   --border-color: #a9a9a96f;
@@ -42,7 +42,9 @@ body {
   font-family: 'Inter', system-ui, sans-serif;
   background-color: var(--bg-color);
   color: var(--text-primary);
-  transition: background-color 0.3s, color 0.3s;
+  transition:
+    background-color 0.3s,
+    color 0.3s;
 }
 
 /* 卡片布局样式 */
@@ -112,7 +114,9 @@ body {
     width: 60px !important;
   }
 
-  .menu-label, .section-title, .hot-title {
+  .menu-label,
+  .section-title,
+  .hot-title {
     display: none;
   }
 }
@@ -140,12 +144,11 @@ body {
 }
 
 /* 暗色主题适配 */
-:root[data-theme="dark"] ::-webkit-scrollbar-thumb {
+:root[data-theme='dark'] ::-webkit-scrollbar-thumb {
   background-color: rgba(100, 100, 100, 0);
 }
 
-:root[data-theme="dark"] :hover::-webkit-scrollbar-thumb,
-:root[data-theme="dark"] ::-webkit-scrollbar-thumb:active {
+:root[data-theme='dark'] :hover::-webkit-scrollbar-thumb,
+:root[data-theme='dark'] ::-webkit-scrollbar-thumb:active {
   background-color: rgba(100, 100, 100, 0.6);
 }
-

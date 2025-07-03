@@ -12,57 +12,57 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 const props = defineProps<{
-  modelValue: string;
+  modelValue: string
   tabs: Array<{
-    key: string;
-    label: string;
-    route: string;
-  }>;
-}>();
+    key: string
+    label: string
+    route: string
+  }>
+}>()
 
 const emit = defineEmits<{
-  (e: "update:modelValue", value: string): void;
-}>();
+  (e: 'update:modelValue', value: string): void
+}>()
 
-const router = useRouter();
-const route = useRoute();
-const activeKey = ref(props.modelValue);
+const router = useRouter()
+const route = useRoute()
+const activeKey = ref(props.modelValue)
 
 // 同步路由变化到Tab
 watch(
   () => route.path,
   (newPath) => {
-    const matchedTab = props.tabs.find((tab) => tab.route === newPath);
+    const matchedTab = props.tabs.find((tab) => tab.route === newPath)
     if (matchedTab) {
-      activeKey.value = matchedTab.key;
+      activeKey.value = matchedTab.key
     }
   },
   { immediate: true }
-);
+)
 
 // 同步Tab变化到路由和父组件
 const handleTabClick = (key: string) => {
-  activeKey.value = key;
-  emit("update:modelValue", key);
-  const matchedTab = props.tabs.find((tab) => tab.key === key);
+  activeKey.value = key
+  emit('update:modelValue', key)
+  const matchedTab = props.tabs.find((tab) => tab.key === key)
   if (matchedTab && route.path !== matchedTab.route) {
     // 原代码使用了未导入的 useRouter，需要先导入 useRouter 并使用它来进行路由跳转
     // 这里需要补充导入 useRouter，以下为修正后的代码
-    router.push(matchedTab.route);
+    router.push(matchedTab.route)
   }
-};
+}
 
 // 同步props变化到本地状态
 watch(
   () => props.modelValue,
   (newValue) => {
-    activeKey.value = newValue;
+    activeKey.value = newValue
   }
-);
+)
 </script>
 
 <style scoped>

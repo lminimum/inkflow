@@ -6,16 +6,16 @@ export interface NavigationItem {
 }
 
 export interface ModelListResponse {
-  [service: string]: string[];
+  [service: string]: string[]
 }
 
 export interface Message {
-  role: 'user' | 'assistant';
-  content: string;
+  role: 'user' | 'assistant'
+  content: string
 }
 
 export interface GenerateResponse {
-  content: string;
-  model?: string;
-  timestamp?: number;
+  content: string
+  model?: string
+  timestamp?: number
 }

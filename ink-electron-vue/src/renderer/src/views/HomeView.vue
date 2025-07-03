@@ -65,11 +65,7 @@
         <div class="realtime-section">
           <h2 class="section-title">实时爆文</h2>
           <div class="realtime-list">
-            <div
-              class="realtime-item"
-              v-for="(article, i) in realtimeArticles"
-              :key="i"
-            >
+            <div class="realtime-item" v-for="(article, i) in realtimeArticles" :key="i">
               <span class="realtime-rank">{{ i + 1 }}</span>
               <div class="realtime-content">
                 <h3 class="realtime-title">{{ article.title }}</h3>
@@ -85,19 +81,13 @@
         <div class="fans-ranking-section">
           <h2 class="section-title">粉丝量排行榜</h2>
           <div class="ranking-list">
-            <div
-              class="ranking-item"
-              v-for="(author, i) in authorRanking"
-              :key="i"
-            >
+            <div class="ranking-item" v-for="(author, i) in authorRanking" :key="i">
               <span class="rank-number">{{ i + 1 }}</span>
               <div class="author-info">
                 <div class="author-avatar">{{ author.name.charAt(0) }}</div>
                 <div class="author-details">
                   <h3 class="author-name">{{ author.name }}</h3>
-                  <p class="author-stats">
-                    {{ author.fans }}粉丝 · {{ author.likes }}获赞
-                  </p>
+                  <p class="author-stats">{{ author.fans }}粉丝 · {{ author.likes }}获赞</p>
                 </div>
               </div>
               <!-- 移除奖励金额显示 -->
@@ -110,8 +100,8 @@
 </template>
 
 <script setup>
-import { useRouter } from "vue-router";
-const router = useRouter();
+import { useRouter } from 'vue-router'
+const router = useRouter()
 import {
   EditOutlined,
   CodeOutlined,
@@ -119,44 +109,44 @@ import {
   BarChartOutlined,
   DatabaseOutlined,
   SettingOutlined,
-  QuestionCircleOutlined,
-} from "@ant-design/icons-vue";
+  QuestionCircleOutlined
+} from '@ant-design/icons-vue'
 // 热点话题数据
 // 实时爆文数据
 const realtimeArticles = [
-  { title: "国常会最新部署：释放三大政策信号", views: "235.6万观看" },
-  { title: "突发！美联储宣布加息25个基点", views: "189.3万观看" },
-  { title: "苹果新品发布会全程回顾", views: "156.7万观看" },
-  { title: "高考志愿填报十大误区", views: "128.9万观看" },
-  { title: "多地出现极端高温天气", views: "102.4万观看" },
-];
+  { title: '国常会最新部署：释放三大政策信号', views: '235.6万观看' },
+  { title: '突发！美联储宣布加息25个基点', views: '189.3万观看' },
+  { title: '苹果新品发布会全程回顾', views: '156.7万观看' },
+  { title: '高考志愿填报十大误区', views: '128.9万观看' },
+  { title: '多地出现极端高温天气', views: '102.4万观看' }
+]
 
 // 粉丝量排行榜数据（按粉丝数降序排列）
 // 统计数据
-const totalWorks = "128 篇";
-const totalVisits = "3.2 万";
-const totalIncome = "¥15,680";
+const totalWorks = '128 篇'
+const totalVisits = '3.2 万'
+const totalIncome = '¥15,680'
 
 // 作者排行榜数据（按粉丝数降序排列）
 const authorRanking = [
-  { name: "数码科技迷", fans: "124.7万", likes: "896.5万" },
-  { name: "旅行摄影日记", fans: "98.3万", likes: "654.2万" },
-  { name: "美食烹饪大师", fans: "76.5万", likes: "432.1万" },
-  { name: "职场成长指南", fans: "62.8万", likes: "321.7万" },
-  { name: "健康养生专家", fans: "54.2万", likes: "289.3万" },
-];
+  { name: '数码科技迷', fans: '124.7万', likes: '896.5万' },
+  { name: '旅行摄影日记', fans: '98.3万', likes: '654.2万' },
+  { name: '美食烹饪大师', fans: '76.5万', likes: '432.1万' },
+  { name: '职场成长指南', fans: '62.8万', likes: '321.7万' },
+  { name: '健康养生专家', fans: '54.2万', likes: '289.3万' }
+]
 
 // 热点话题数据
 const hotTopics = [
-  { title: "直击两会民生热点" },
-  { title: "女子校门口被撞身亡" },
-  { title: "俄国防部称将增加西部军区兵力" },
-  { title: "哈尔滨工程大学超话被封" },
-  { title: "特朗普再被起诉" },
-  { title: "微信支付重大更新" },
-  { title: "油价调价窗口今日开启" },
-  { title: "科学家发现新型超导材料" },
-];
+  { title: '直击两会民生热点' },
+  { title: '女子校门口被撞身亡' },
+  { title: '俄国防部称将增加西部军区兵力' },
+  { title: '哈尔滨工程大学超话被封' },
+  { title: '特朗普再被起诉' },
+  { title: '微信支付重大更新' },
+  { title: '油价调价窗口今日开启' },
+  { title: '科学家发现新型超导材料' }
+]
 </script>
 
 <style scoped>
@@ -272,7 +262,9 @@ const hotTopics = [
   padding: 1rem 0.8rem;
   font-size: 0.9rem;
   border-radius: 8px;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .nav-card.card-color-1 {
@@ -495,7 +487,7 @@ const hotTopics = [
   padding: 2rem;
 }
 .ink-title {
-  font-family: "Ma Shan Zheng", cursive;
+  font-family: 'Ma Shan Zheng', cursive;
   color: var(--ink-black);
   text-align: center;
   margin-bottom: 3rem;

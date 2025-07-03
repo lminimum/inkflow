@@ -5,14 +5,10 @@
       <!-- 左侧展示界面 -->
       <div class="display-section">
         <div class="display-header">
-          <h2>{{ generatedTitle || "生成内容预览" }}</h2>
+          <h2>{{ generatedTitle || '生成内容预览' }}</h2>
           <div class="display-actions">
-            <button class="action-btn" @click="copyContent">
-              <CopyOutlined /> 复制
-            </button>
-            <button class="action-btn" @click="editContent">
-              <EditOutlined /> 编辑
-            </button>
+            <button class="action-btn" @click="copyContent"><CopyOutlined /> 复制</button>
+            <button class="action-btn" @click="editContent"><EditOutlined /> 编辑</button>
             <button class="action-btn"><ExportOutlined /> 导出</button>
           </div>
         </div>
@@ -45,22 +41,14 @@
         </div>
         <div class="chat-messages">
           <div
-            :class="[
-              'message',
-              msg.role === 'user' ? 'user-message' : 'ai-message',
-            ]"
+            :class="['message', msg.role === 'user' ? 'user-message' : 'ai-message']"
             v-for="(msg, index) in messages"
             :key="index"
           >
             <div class="message-avatar">
-              <component
-                :is="msg.role === 'user' ? UserOutlined : RobotOutlined"
-              />
+              <component :is="msg.role === 'user' ? UserOutlined : RobotOutlined" />
             </div>
-            <div
-              class="message-content markdown-content"
-              v-html="parseMarkdown(msg.content)"
-            ></div>
+            <div class="message-content markdown-content" v-html="parseMarkdown(msg.content)"></div>
           </div>
           <div class="typing-indicator" v-if="isGenerating">
             <div class="dot"></div>
@@ -88,11 +76,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { useModelsStore } from "../store/modelsStore";
-import type { Message } from "../types";
-import { generateContent } from "../api/generate";
-import { marked } from "marked";
+import { ref, onMounted } from 'vue'
+import { useModelsStore } from '../store/modelsStore'
+import type { Message } from '../types'
+import { generateContent } from '../api/generate'
+import { marked } from 'marked'
 import {
   UserOutlined,
   RobotOutlined,
@@ -101,100 +89,100 @@ import {
   ExportOutlined,
   CopyOutlined,
   EditOutlined,
-  ClearOutlined,
-} from "@ant-design/icons-vue";
+  ClearOutlined
+} from '@ant-design/icons-vue'
 
 // Markdown解析函数
 const parseMarkdown = (content: string) => {
-  return marked.parse(content);
-};
+  return marked.parse(content)
+}
 
 // 生成内容状态
-const generatedTitle = ref("");
-const generatedContent = ref("");
-const isGenerating = ref(false);
+const generatedTitle = ref('')
+const generatedContent = ref('')
+const isGenerating = ref(false)
 
 // 对话状态
-const modelsStore = useModelsStore();
-const selectedModel = ref("");
+const modelsStore = useModelsStore()
+const selectedModel = ref('')
 
 onMounted(() => {
   modelsStore.loadModels().then(() => {
     // 设置默认模型
     if (modelsStore.modelOptions.length > 0) {
-      selectedModel.value = modelsStore.modelOptions[0].value;
+      selectedModel.value = modelsStore.modelOptions[0].value
     }
-  });
-});
+  })
+})
 
 const messages = ref<Message[]>([
   {
-    role: "assistant",
+    role: 'assistant',
     content:
-      "您好！我可以帮您创作内容。请告诉我您的主题或需求，我会生成相应的文本并可以根据您的反馈进行修改。",
-  },
-]);
-const userInput = ref("");
+      '您好！我可以帮您创作内容。请告诉我您的主题或需求，我会生成相应的文本并可以根据您的反馈进行修改。'
+  }
+])
+const userInput = ref('')
 
 const handleGenerate = async () => {
-  if (!userInput.value.trim()) return;
+  if (!userInput.value.trim()) return
 
   // 添加用户消息
-  messages.value.push({ role: "user", content: userInput.value });
-  isGenerating.value = true;
+  messages.value.push({ role: 'user', content: userInput.value })
+  isGenerating.value = true
 
   try {
     // 查找选中模型的提供商
     const selectedOption = modelsStore.modelOptions.find(
       (option) => option.value === selectedModel.value
-    );
-    const provider = selectedOption?.provider || "deepseek";
+    )
+    const provider = selectedOption?.provider || 'deepseek'
 
     const response = await generateContent(
-      [{ role: "user", content: userInput.value }],
+      [{ role: 'user', content: userInput.value }],
       selectedModel.value,
       provider
-    );
+    )
     // 使用marked解析Markdown内容
-    generatedContent.value = await marked.parse(response.content);
+    generatedContent.value = await marked.parse(response.content)
     if (response.content) {
-      messages.value.push({ role: "assistant", content: response.content });
+      messages.value.push({ role: 'assistant', content: response.content })
     }
-    userInput.value = ""; // 清空输入
+    userInput.value = '' // 清空输入
   } catch (error) {
-    console.error("生成内容失败:", error);
+    console.error('生成内容失败:', error)
     messages.value.push({
-      role: "assistant",
-      content: "抱歉，生成内容时出错，请稍后再试。",
-    });
+      role: 'assistant',
+      content: '抱歉，生成内容时出错，请稍后再试。'
+    })
   } finally {
-    isGenerating.value = false;
+    isGenerating.value = false
   }
-};
+}
 
 // 复制内容到剪贴板
 const copyContent = () => {
-  if (!generatedContent.value) return;
-  navigator.clipboard.writeText(generatedContent.value);
-  alert("内容已复制到剪贴板");
-};
+  if (!generatedContent.value) return
+  navigator.clipboard.writeText(generatedContent.value)
+  alert('内容已复制到剪贴板')
+}
 
 // 清空对话
 const clearChat = () => {
   messages.value = [
     {
-      role: "assistant",
+      role: 'assistant',
       content:
-        "您好！我可以帮您创作内容。请告诉我您的主题或需求，我会生成相应的文本并可以根据您的反馈进行修改。",
-    },
-  ];
-};
+        '您好！我可以帮您创作内容。请告诉我您的主题或需求，我会生成相应的文本并可以根据您的反馈进行修改。'
+    }
+  ]
+}
 
 // 编辑内容
 const editContent = () => {
   // 可以在这里实现编辑功能
-  alert("编辑功能待实现");
-};
+  alert('编辑功能待实现')
+}
 </script>
 
 <style scoped>

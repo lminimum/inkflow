@@ -4,18 +4,10 @@
     <div v-if="loading" class="loading">加载中...</div>
     <div v-if="error" class="error">{{ error }}</div>
     <div class="model-grid" v-else>
-      <div
-        v-for="serviceGroup in models"
-        :key="serviceGroup.service"
-        class="service-section"
-      >
+      <div v-for="serviceGroup in models" :key="serviceGroup.service" class="service-section">
         <h2>{{ serviceGroup.service }}</h2>
         <div class="model-grid">
-          <div
-            class="model-card"
-            v-for="model in serviceGroup.models"
-            :key="model"
-          >
+          <div class="model-card" v-for="model in serviceGroup.models" :key="model">
             <h3>{{ model }}</h3>
           </div>
         </div>
@@ -25,26 +17,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { fetchModels } from "../api/models";
-const models = ref<Array<{ service: string; models: string[] }>>([]);
-const loading = ref(true);
-const error = ref("");
+import { ref, onMounted } from 'vue'
+import { fetchModels } from '../api/models'
+const models = ref<Array<{ service: string; models: string[] }>>([])
+const loading = ref(true)
+const error = ref('')
 
 onMounted(async () => {
   try {
-    const response = await fetchModels();
+    const response = await fetchModels()
     models.value = Object.entries(response).map(([service, modelNames]) => ({
       service,
-      models: modelNames,
-    }));
+      models: modelNames
+    }))
   } catch (err) {
-    error.value = "获取模型列表失败，请稍后重试";
-    console.error(err);
+    error.value = '获取模型列表失败，请稍后重试'
+    console.error(err)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-});
+})
 </script>
 
 <style scoped>

@@ -27,39 +27,39 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import { useRoute } from "vue-router";
-import { SettingOutlined } from "@ant-design/icons-vue";
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { SettingOutlined } from '@ant-design/icons-vue'
 
 export interface NavigationItem {
-  to?: string;
-  icon?: any;
-  handler?: () => void;
+  to?: string
+  icon?: any
+  handler?: () => void
 }
 
 const props = defineProps<{
-  isDark: boolean;
-  topItems?: NavigationItem[];
-  addButton?: NavigationItem;
-  onSettingClick?: () => void;
-}>();
+  isDark: boolean
+  topItems?: NavigationItem[]
+  addButton?: NavigationItem
+  onSettingClick?: () => void
+}>()
 
 // Define emits properly
-const emit = defineEmits(["itemClick"]);
+const emit = defineEmits(['itemClick'])
 
-const route = useRoute();
-const currentRoute = computed(() => route.path);
+const route = useRoute()
+const currentRoute = computed(() => route.path)
 
 const handleClick = (item: NavigationItem) => {
   if (item.to) {
-    emit("itemClick", item);
+    emit('itemClick', item)
   }
-  item.handler?.();
-};
+  item.handler?.()
+}
 
 const handleSettingClick = () => {
-  props.onSettingClick?.();
-};
+  props.onSettingClick?.()
+}
 </script>
 
 <style scoped>
