@@ -69,12 +69,14 @@ app.add_middleware(
 )
 
 # 定义输出目录路径
-OUTPUT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../outputs'))
+OUTPUT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../static'))
 HTML_OUTPUT_DIR = os.path.join(OUTPUT_DIR, 'html_outputs')
+IMAGE_OUTPUT_DIR = os.path.join(OUTPUT_DIR, 'image_outputs')
 
 # 确保输出目录存在
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(HTML_OUTPUT_DIR, exist_ok=True)
+os.makedirs(IMAGE_OUTPUT_DIR, exist_ok=True)
 
 # 挂载静态文件目录
 app.mount("/static", StaticFiles(directory=OUTPUT_DIR), name="static")
@@ -289,10 +291,10 @@ async def html_to_image(request: HtmlToImageRequest, background_tasks: Backgroun
                 output_path = os.path.abspath(output_path)
                 logger.debug(f"输出路径转换为绝对路径: {output_path}")
         else:
-            # 使用 HTML 文件名作为图片名，保存到 HTML_OUTPUT_DIR 目录
+            # 使用 HTML 文件名作为图片名，保存到 IMAGE_OUTPUT_DIR 目录
             html_filename = os.path.basename(html_path)
             image_filename = html_filename.replace('.html', '.png')
-            output_path = os.path.join(HTML_OUTPUT_DIR, image_filename)
+            output_path = os.path.join(IMAGE_OUTPUT_DIR, image_filename)
             logger.debug(f"自动生成输出路径: {output_path}")
         
         # 确保输出目录存在
@@ -377,7 +379,7 @@ async def analyze_hotspots(request: HotspotAnalyzeRequest):
 async def get_image(image_name: str):
     """获取图片文件"""
     # 构建图片路径
-    image_path = os.path.join(HTML_OUTPUT_DIR, image_name)
+    image_path = os.path.join(IMAGE_OUTPUT_DIR, image_name)
     
     # 检查文件是否存在
     if not os.path.exists(image_path):

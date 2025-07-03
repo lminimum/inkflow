@@ -86,43 +86,58 @@
               <template v-if="isGenerating">生成中...</template>
               <template v-else>生成HTML</template>
             </button>
+
+            <div v-if="showPreviewButton" class="preview-btn-container">
+              <button type="button" class="preview-btn" @click="handlePreviewClick">
+                生成预览
+              </button>
+            </div>
           </form>
         </div>
-        <!-- 调试信息区 -->
-        <div class="debug-info">
-          <h4>生成信息</h4>
-          <div v-if="currentStage" class="debug-stage">当前阶段：{{ currentStage }}</div>
-          <div
-            v-for="(item, idx) in debugResults.filter(
-              (i) => i.label !== 'CSS' && i.label !== '区块HTML' && i.label !== '最终HTML'
-            )"
-            :key="idx"
-            class="debug-result"
-          >
-            <div class="debug-label">{{ item.label }}：</div>
-            <pre class="debug-value">{{ item.value }}</pre>
-          </div>
-          <div
-            v-for="(item, idx) in debugResults.filter(
-              (i) => i.label === '区块HTML' || i.label === '最终HTML'
-            )"
-            :key="'html-' + idx"
-            class="debug-result"
-          >
-            <div class="debug-label">{{ item.label }}：</div>
-            <pre class="debug-value">已生成</pre>
+
+        <!-- 进度信息区 -->
+        <div v-if="currentStage || isGenerating" class="progress-info">
+          <div class="progress-stage">{{ currentStage || '准备中...' }}</div>
+          <div class="progress-bar">
+            <div class="progress-fill" :style="{ width: generationProgress + '%' }"></div>
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- 预览区域 -->
+    <div v-if="showPreview" class="preview-section">
+      <h2 class="preview-title">图片预览</h2>
+
+      <!-- 加载中状态 -->
+      <div v-if="isLoadingPreview" class="preview-loading">正在生成预览图片...</div>
+
+      <!-- 错误信息 -->
+      <div v-if="previewError" class="preview-error">
+        {{ previewError }}
+      </div>
+
+      <!-- 使用轮播组件 -->
+      <div v-if="previewImages.length > 0" class="carousel-wrapper">
+        <ImageCarousel
+          :images="previewImages"
+          :title="formData.theme"
+          :description="getCommonDescription()"
+        />
+      </div>
+
+      <!-- 无图片提示 -->
+      <div v-else-if="!isLoadingPreview && !previewError" class="no-images">暂无预览图片</div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useHtmlStore } from '../store/htmlStore'
 import HtmlSectionPager from '../components/HtmlSectionPager.vue'
+import ImageCarousel from '../components/ImageCarousel.vue'
 import {
   generateTitle,
   generateCss,
@@ -134,9 +149,11 @@ import {
   type SectionsRequestParams,
   type SectionHTMLRequestParams
 } from '../api/htmlGenerate'
+import { htmlToImage, type HtmlToImageParams } from '../api/htmlToImage'
+import type { FormData } from '../store/htmlStore'
 
 // 表单数据
-const formData = ref({
+const formData = ref<FormData>({
   theme: '',
   style: '',
   audience: '',
@@ -163,14 +180,27 @@ const audienceOptions = ref([
 // 生成状态
 const isGenerating = ref(false)
 const htmlStore = useHtmlStore()
-const { htmlSections } = storeToRefs(htmlStore)
+const { htmlSections, sectionDescriptions: storeSectionDescriptions } = storeToRefs(htmlStore)
 
 // 用于存储完整的HTML，用于复制和预览
 const fullGeneratedHtml = ref('')
 
-// 调试信息相关
+// 进度信息相关
 const currentStage = ref('')
-const debugResults = reactive<Array<{ label: string; value: string }>>([])
+const generationProgress = ref(0)
+const showPreviewButton = ref(false)
+const showPreview = ref(false)
+const sectionDescriptions = ref<string[]>([])
+
+// 图片预览相关
+const previewImages = ref<Array<{ url: string }>>([])
+const isLoadingPreview = ref(false)
+const previewError = ref('')
+
+// 获取API基础URL
+const getApiBaseUrl = (): string => {
+  return import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+}
 
 // 生成HTML
 const handleGenerateHtml = async (): Promise<void> => {
@@ -179,16 +209,21 @@ const handleGenerateHtml = async (): Promise<void> => {
     alert('请填写所有必填字段')
     return
   }
+
   // 处理自定义风格/受众
   let style = formData.value.style === 'custom' ? formData.value.customStyle : formData.value.style
   let audience =
     formData.value.audience === 'custom' ? formData.value.customAudience : formData.value.audience
 
   isGenerating.value = true
+  showPreviewButton.value = false
+  showPreview.value = false
   htmlStore.clearHtml()
   fullGeneratedHtml.value = ''
-  debugResults.length = 0
+  sectionDescriptions.value = []
+  generationProgress.value = 0
   currentStage.value = '正在生成标题'
+
   try {
     // 1. 调用生成标题接口
     const titleParams: HTMLGenerateParams = {
@@ -201,7 +236,7 @@ const handleGenerateHtml = async (): Promise<void> => {
       throw new Error('从后端获取标题失败或标题为空。')
     }
     const title = titleResponse.title
-    debugResults.push({ label: '标题', value: title })
+    generationProgress.value = 20
     currentStage.value = '正在生成CSS'
 
     // 2. 调用生成CSS接口
@@ -215,6 +250,7 @@ const handleGenerateHtml = async (): Promise<void> => {
       throw new Error('从后端获取CSS失败或CSS为空。')
     }
     const css_style = cssResponse.css_style
+    generationProgress.value = 40
     currentStage.value = '正在生成内容'
 
     // 3. 调用生成内容接口
@@ -229,7 +265,7 @@ const handleGenerateHtml = async (): Promise<void> => {
       throw new Error('从后端获取内容失败或内容为空。')
     }
     const content = contentResponse.content
-    debugResults.push({ label: '主内容', value: content })
+    generationProgress.value = 60
     currentStage.value = '正在分割内容'
 
     // 4. 调用内容分割接口
@@ -246,12 +282,17 @@ const handleGenerateHtml = async (): Promise<void> => {
       throw new Error('从后端分割内容失败或内容片段为空。')
     }
     const textSections = sectionsResponse.sections
-    debugResults.push({ label: '分段内容', value: JSON.stringify(textSections, null, 2) })
+    sectionDescriptions.value = [...textSections]
+    htmlStore.saveSectionDescriptions(textSections)
+    generationProgress.value = 70
     currentStage.value = '正在生成内容区块HTML'
 
     // 5. 遍历内容片段，调用生成单个内容区块HTML接口
     let sectionHtmlArr: string[] = []
-    for (const section of textSections) {
+    let progressStep = 30 / textSections.length
+
+    for (let i = 0; i < textSections.length; i++) {
+      const section = textSections[i]
       const sectionHtmlParams: SectionHTMLRequestParams = {
         title: title,
         description: section,
@@ -271,19 +312,26 @@ const handleGenerateHtml = async (): Promise<void> => {
         } else {
           sectionHtmlArr.push('生成失败')
         }
+        generationProgress.value = 70 + (i + 1) * progressStep
       } catch (err) {
         sectionHtmlArr.push('生成失败' + err)
       }
     }
+
     if (htmlStore.htmlSections.length === 0) {
       throw new Error('所有内容区块HTML生成失败或为空。')
     }
-    debugResults.push({ label: '区块HTML', value: sectionHtmlArr.join('\n\n') })
-    currentStage.value = '正在构建最终HTML'
 
-    isGenerating.value = false
-    debugResults.push({ label: '最终HTML', value: '已生成' })
-    currentStage.value = ''
+    generationProgress.value = 100
+    currentStage.value = '生成完成'
+
+    setTimeout(() => {
+      isGenerating.value = false
+      currentStage.value = ''
+      showPreviewButton.value = true
+      // 保存表单数据到 store
+      htmlStore.saveFormData(formData.value)
+    }, 1000)
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error)
     alert(`生成失败: ${message}`)
@@ -292,11 +340,97 @@ const handleGenerateHtml = async (): Promise<void> => {
   }
 }
 
+// 处理预览按钮点击
+const handlePreviewClick = async (): Promise<void> => {
+  if (htmlSections.value.length === 0) {
+    return
+  }
+
+  isLoadingPreview.value = true
+  previewError.value = ''
+  previewImages.value = []
+  showPreview.value = true
+
+  try {
+    // 为每个HTML部分生成图片
+    for (const section of htmlSections.value) {
+      if (!section.file_path && !section.html_url) continue
+
+      // 修复路径问题：尝试不同的路径格式
+      let htmlPath = ''
+
+      if (section.html_url) {
+        // 如果是相对路径，不要添加前缀
+        if (section.html_url.startsWith('/')) {
+          // 去掉开头的斜杠，因为后端可能期望相对路径
+          htmlPath = section.html_url.substring(1)
+        } else {
+          htmlPath = section.html_url
+        }
+      } else if (section.file_path) {
+        htmlPath = section.file_path
+      }
+
+      if (!htmlPath) continue
+
+      // 调用HTML转图片接口
+      const params: HtmlToImageParams = {
+        html_path: htmlPath,
+        width: 375,
+        height: 667
+      }
+
+      console.log('发送HTML转图片请求，路径:', htmlPath)
+      const result = await htmlToImage(params)
+
+      if (result.success && (result.image_url || result.output_path)) {
+        // 构建图片URL
+        const imageUrl = result.image_url
+          ? getApiBaseUrl() + result.image_url
+          : result.output_path
+            ? 'file://' + result.output_path
+            : ''
+
+        if (imageUrl) {
+          // 只需要 url 属性，适配 ImageCarousel 组件
+          previewImages.value.push({ url: imageUrl })
+        }
+      } else {
+        console.error('HTML转图片失败:', result.msg || '未知错误')
+      }
+    }
+
+    if (previewImages.value.length === 0) {
+      previewError.value = '生成预览图片失败'
+    }
+  } catch (error) {
+    console.error('预览生成错误:', error)
+    previewError.value = error instanceof Error ? error.message : String(error)
+  } finally {
+    isLoadingPreview.value = false
+  }
+}
+
+// 获取通用描述
+const getCommonDescription = (): string => {
+  const description =
+    storeSectionDescriptions.value.length > 0 ? storeSectionDescriptions.value[0] : '暂无描述'
+
+  return description.length > 100 ? description.substring(0, 100) + '...' : description
+}
+
 // 页面初始化时恢复内容 (如果需要)
 onMounted(() => {
-  // 目前不实现恢复功能，每次进入页面清空
-  htmlStore.clearHtml()
-  fullGeneratedHtml.value = ''
+  // 检查 store 中是否已有内容，如果有则不清空
+  if (htmlStore.htmlSections.length > 0) {
+    showPreviewButton.value = true
+    // 恢复表单数据
+    formData.value = { ...htmlStore.formData }
+    showPreview.value = false
+  } else {
+    htmlStore.clearAll()
+    fullGeneratedHtml.value = ''
+  }
 })
 </script>
 
@@ -519,5 +653,135 @@ onMounted(() => {
   border-radius: 4px;
   background-color: var(--bg-color);
   color: var(--text-primary);
+}
+
+/* 进度信息区样式 */
+.progress-info {
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  margin: 1.5rem;
+  padding: 1rem;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.progress-stage {
+  color: var(--primary-color);
+  font-weight: bold;
+  margin-bottom: 0.8rem;
+  text-align: center;
+}
+
+.progress-bar {
+  height: 8px;
+  background-color: var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: var(--primary-color);
+  transition: width 0.3s ease;
+}
+
+/* 预览区域样式 */
+.preview-section {
+  margin-top: 2rem;
+  padding: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.preview-title {
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  color: var(--text-primary);
+}
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.image-card {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.image-container {
+  height: 200px;
+  overflow: hidden;
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-info {
+  padding: 1rem;
+}
+
+.image-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.image-description {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+.preview-btn-container {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.preview-btn {
+  width: 100%;
+  padding: 0.6rem 1.2rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.2s;
+}
+
+.preview-btn:hover {
+  background: var(--primary-color-dark, #0056b3);
+}
+
+.preview-loading {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.preview-error {
+  text-align: center;
+  color: red;
+  margin-bottom: 1rem;
+}
+
+.no-images {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.carousel-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 2rem auto;
+  max-width: 375px;
 }
 </style>
