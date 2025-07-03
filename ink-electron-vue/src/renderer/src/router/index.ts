@@ -32,10 +32,10 @@ export default createRouter({
       meta: { title: '模型列表' }
     },
     {
-      path: '/prepublish',
-      name: 'PrePublish',
-      component: () => import('@renderer/views/PrePublish.vue'),
-      meta: { title: '预发布' }
+      path: '/html-to-image',
+      name: 'HtmlToImageTool',
+      component: () => import('@renderer/views/HtmlToImageTool.vue'),
+      meta: { title: 'HTML转图片工具' }
     }
   ]
 })

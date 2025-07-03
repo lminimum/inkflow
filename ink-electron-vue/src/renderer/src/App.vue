@@ -73,8 +73,8 @@ const close = (): void => window.electronAPI?.close()
 // Tab配置
 const tabs = [
   { label: '主页', key: 'home', route: '/' },
-  { label: '模型', key: 'models', route: '/models' },
-  { label: '预发布', key: 'prepublish', route: '/prepublish' }
+  { label: '工具', key: 'tools', route: '/html-to-image' },
+  { label: '设置', key: 'settings', route: '/models' }
 ]
 
 // Tab状态管理
@@ -83,24 +83,29 @@ const switchTab = (tab: string): void => {
   activeTab.value = tab
   if (tab === 'home') {
     router.push('/')
-  } else if (tab === 'models') {
+  } else if (tab === 'tools') {
+    router.push('/html-to-image')
+  } else if (tab === 'settings') {
     router.push('/models')
   }
 }
 
 // 定义不同tab对应的导航项
-const creationNavItems = [
+const homeNavItems = [
   { to: '/', icon: HomeOutlined },
   { to: '/ai-creation', icon: EditOutlined },
-  { to: '/html-creation', icon: BuildOutlined },
-  { to: '/prepublish', icon: BorderOutlined }
+  { to: '/html-creation', icon: BuildOutlined }
 ]
 
-const modelNavItems = [{ to: '/models', icon: DatabaseOutlined }]
+const toolsNavItems = [{ to: '/html-to-image', icon: BorderOutlined }]
+
+const settingsNavItems = [{ to: '/models', icon: DatabaseOutlined }]
 
 // 动态导航项
 const topNavItems = computed(() => {
-  return activeTab.value === 'home' ? creationNavItems : modelNavItems
+  if (activeTab.value === 'home') return homeNavItems
+  if (activeTab.value === 'tools') return toolsNavItems
+  return settingsNavItems
 })
 
 const router = useRouter()
@@ -113,8 +118,10 @@ const handleNavClick = (item: { to?: string; handler?: () => void }): void => {
     // 根据路由更新activeTab
     if (item.to === '/' || item.to === '/ai-creation' || item.to === '/html-creation') {
       activeTab.value = 'home'
+    } else if (item.to === '/html-to-image') {
+      activeTab.value = 'tools'
     } else if (item.to === '/models') {
-      activeTab.value = 'models'
+      activeTab.value = 'settings'
     }
   }
   item.handler?.()

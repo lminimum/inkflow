@@ -337,7 +337,7 @@ const goToPrePublish = (): void => {
   const htmlPath = htmlStore.htmlSections[0]?.html_url || htmlStore.htmlSections[0]?.file_path || ''
   const theme = formData.value.theme
   router.push({
-    path: '/prepublish',
+    path: '/html-to-image',
     query: {
       html_path: htmlPath,
       theme: theme

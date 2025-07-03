@@ -100,14 +100,14 @@ export const generateTitle = async (params: HTMLGenerateParams): Promise<TitleRe
     if (
       !responseData ||
       typeof responseData !== 'object' ||
-      typeof (responseData as any).title !== 'string' ||
-      !(responseData as any).title
+      typeof (responseData as Record<string, unknown>).title !== 'string' ||
+      !(responseData as Record<string, unknown>).title
     ) {
       throw new Error('从后端获取标题失败或标题格式不正确。')
     }
 
     return responseData as TitleResponse // 将检查后的数据断言为 TitleResponse
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('生成标题失败:', error)
     throw error
   }
@@ -130,14 +130,14 @@ export const generateCss = async (params: HTMLGenerateParams): Promise<CSSRespon
     if (
       !responseData ||
       typeof responseData !== 'object' ||
-      typeof (responseData as any).css_style !== 'string' ||
-      !(responseData as any).css_style
+      typeof (responseData as Record<string, unknown>).css_style !== 'string' ||
+      !(responseData as Record<string, unknown>).css_style
     ) {
       throw new Error('从后端获取CSS失败或CSS格式不正确。')
     }
 
     return responseData as CSSResponse // 将检查后的数据断言为 CSSResponse
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('生成CSS失败:', error)
     throw error
   }
@@ -160,14 +160,14 @@ export const generateContent = async (params: ContentRequestParams): Promise<Con
     if (
       !responseData ||
       typeof responseData !== 'object' ||
-      typeof (responseData as any).content !== 'string' ||
-      !(responseData as any).content
+      typeof (responseData as Record<string, unknown>).content !== 'string' ||
+      !(responseData as Record<string, unknown>).content
     ) {
       throw new Error('从后端获取内容失败或内容格式不正确。')
     }
 
     return responseData as ContentResponse // 将检查后的数据断言为 ContentResponse
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('生成内容失败:', error)
     throw error
   }
@@ -192,14 +192,14 @@ export const splitContentIntoSections = async (
     if (
       !responseData ||
       typeof responseData !== 'object' ||
-      !Array.isArray((responseData as any).sections) ||
-      (responseData as any).sections.length === 0
+      !Array.isArray((responseData as Record<string, unknown>).sections) ||
+      ((responseData as Record<string, unknown>).sections as unknown[]).length === 0
     ) {
       throw new Error('从后端分割内容失败或内容格式不正确。')
     }
 
     return responseData as SectionsResponse // 将检查后的数据断言为 SectionsResponse
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('分割内容失败:', error)
     throw error
   }
@@ -213,25 +213,22 @@ export const splitContentIntoSections = async (
 export const generateSectionHtml = async (
   params: SectionHTMLRequestParams
 ): Promise<SectionHTMLResponse> => {
-  try {
-    const responseData: unknown = await apiClient.post('/generate-html/section_html', params)
-    // 检查返回的数据格式
-    if (
-      responseData &&
-      typeof responseData === 'object' &&
-      typeof (responseData as any).html === 'string'
-    ) {
-      // 支持 file_path 字段
-      return {
-        html: (responseData as any).html,
-        file_path: (responseData as any).file_path || undefined,
-        html_url: (responseData as any).html_url || undefined,
-        section_id: (responseData as any).section_id || undefined
-      }
-    } else {
-      throw new Error('从后端获取内容区块HTML失败或格式不正确。')
+  const responseData: unknown = await apiClient.post('/generate-html/section_html', params)
+  // 检查返回的数据格式
+  if (
+    responseData &&
+    typeof responseData === 'object' &&
+    typeof (responseData as Record<string, unknown>).html === 'string'
+  ) {
+    const typedResponse = responseData as Record<string, unknown>
+    // 支持 file_path 字段
+    return {
+      html: typedResponse.html as string,
+      file_path: typedResponse.file_path as string | undefined,
+      html_url: typedResponse.html_url as string | undefined,
+      section_id: typedResponse.section_id as string | undefined
     }
-  } catch (error: any) {
-    throw error
+  } else {
+    throw new Error('从后端获取内容区块HTML失败或格式不正确。')
   }
 }

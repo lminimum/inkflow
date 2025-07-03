@@ -1,9 +1,9 @@
 <template>
-  <div class="prepublish-container">
+  <div class="html-to-image-container">
     <div class="main-content">
       <div class="display-section">
         <div class="display-header">
-          <h2>预发布 - HTML转图片</h2>
+          <h2>HTML转图片工具</h2>
           <div class="display-actions">
             <button class="action-btn" :disabled="loading" @click="handleConvert">
               {{ loading ? '生成中...' : '生成图片' }}
@@ -22,7 +22,7 @@
             <h3>图片预览</h3>
             <img :src="imgUrl" alt="预览图片" class="preview-img" />
           </div>
-          <div v-if="errorMsg" class="prepublish-error">{{ errorMsg }}</div>
+          <div v-if="errorMsg" class="html-to-image-error">{{ errorMsg }}</div>
         </div>
       </div>
       <div class="form-section">
@@ -122,7 +122,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.prepublish-container {
+.html-to-image-container {
   padding: 1.5rem;
   max-width: 1400px;
   margin: 0 auto;
@@ -158,7 +158,7 @@ onMounted(() => {
   gap: 0.5rem;
 }
 .action-btn,
-.prepublish-btn {
+.tool-btn {
   padding: 0.6rem 1.2rem;
   background: var(--primary-color);
   color: #fff;
@@ -169,7 +169,7 @@ onMounted(() => {
   transition: background 0.2s;
 }
 .action-btn:disabled,
-.prepublish-btn:disabled {
+.tool-btn:disabled {
   background: var(--border-color);
   color: #aaa;
   cursor: not-allowed;
@@ -213,7 +213,7 @@ onMounted(() => {
   border: 1px solid var(--border-color);
   background: #fff;
 }
-.prepublish-error {
+.html-to-image-error {
   color: #c3073f;
   margin-top: 1rem;
 }
