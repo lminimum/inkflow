@@ -4,21 +4,6 @@
     <div class="main-content">
       <!-- 左侧预览区 -->
       <div class="display-section">
-        <div class="display-header">
-          <h2>图文预览</h2>
-          <div class="display-actions">
-            <button class="action-btn" @click="copyHtml"><CopyOutlined /> 复制HTML</button>
-            <button class="action-btn" @click="previewInNewTab"><EyeOutlined /> 新窗口预览</button>
-            <button class="action-btn"><ExportOutlined /> 导出</button>
-            <button
-              v-if="htmlStore.htmlSections.length > 0"
-              class="action-btn"
-              @click="goToPrePublish"
-            >
-              去预发布
-            </button>
-          </div>
-        </div>
         <div
           class="display-content"
           style="
@@ -41,9 +26,6 @@
 
       <!-- 右侧表单区 -->
       <div class="form-section">
-        <div class="form-header">
-          <h3>HTML生成参数</h3>
-        </div>
         <div class="form-content">
           <form @submit.prevent="handleGenerateHtml">
             <div class="form-group">
@@ -141,7 +123,6 @@ import { ref, onMounted, reactive } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useHtmlStore } from '../store/htmlStore'
 import HtmlSectionPager from '../components/HtmlSectionPager.vue'
-import { useRouter } from 'vue-router'
 import {
   generateTitle,
   generateCss,
@@ -153,9 +134,6 @@ import {
   type SectionsRequestParams,
   type SectionHTMLRequestParams
 } from '../api/htmlGenerate'
-import { ExportOutlined, CopyOutlined, EyeOutlined } from '@ant-design/icons-vue'
-
-const router = useRouter()
 
 // 表单数据
 const formData = ref({
@@ -303,7 +281,6 @@ const handleGenerateHtml = async (): Promise<void> => {
     debugResults.push({ label: '区块HTML', value: sectionHtmlArr.join('\n\n') })
     currentStage.value = '正在构建最终HTML'
 
-    // 6. 不再拼接完整 HTML，直接结束
     isGenerating.value = false
     debugResults.push({ label: '最终HTML', value: '已生成' })
     currentStage.value = ''
@@ -313,36 +290,6 @@ const handleGenerateHtml = async (): Promise<void> => {
     isGenerating.value = false
     currentStage.value = ''
   }
-}
-
-// 复制完整HTML到剪贴板
-const copyHtml = (): void => {
-  if (!fullGeneratedHtml.value) return
-  navigator.clipboard.writeText(fullGeneratedHtml.value)
-  alert('HTML内容已复制到剪贴板')
-}
-
-// 在新窗口预览完整HTML
-const previewInNewTab = (): void => {
-  if (!fullGeneratedHtml.value) return
-  const newWindow = window.open('', '_blank')
-  if (newWindow) {
-    newWindow.document.write(fullGeneratedHtml.value)
-    newWindow.document.close()
-  }
-}
-
-const goToPrePublish = (): void => {
-  // 优先使用 html_url，如果没有则使用 file_path
-  const htmlPath = htmlStore.htmlSections[0]?.html_url || htmlStore.htmlSections[0]?.file_path || ''
-  const theme = formData.value.theme
-  router.push({
-    path: '/html-to-image',
-    query: {
-      html_path: htmlPath,
-      theme: theme
-    }
-  })
 }
 
 // 页面初始化时恢复内容 (如果需要)
@@ -355,7 +302,7 @@ onMounted(() => {
 
 <style scoped>
 .html-creation-container {
-  padding: 1.5rem;
+  padding: 1rem;
   max-width: 1400px;
   margin: 0 auto;
   min-height: calc(100vh - 108px);

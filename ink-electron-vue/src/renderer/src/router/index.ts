@@ -35,7 +35,7 @@ export default createRouter({
       path: '/html-to-image',
       name: 'HtmlToImageTool',
       component: () => import('@renderer/views/HtmlToImageTool.vue'),
-      meta: { title: 'HTML转图片工具' }
+      meta: { title: 'HTML转图片' }
     }
   ]
 })

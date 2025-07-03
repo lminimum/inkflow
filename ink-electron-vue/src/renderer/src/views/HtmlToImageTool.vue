@@ -14,10 +14,6 @@
           class="display-content"
           style="display: flex; flex-direction: column; align-items: center; min-height: 420px"
         >
-          <div class="theme-edit">
-            <label>主题文案：</label>
-            <input v-model="themeText" placeholder="请输入主题文案" class="theme-input" />
-          </div>
           <div v-if="imgUrl" class="img-preview-wrapper">
             <h3>图片预览</h3>
             <img :src="imgUrl" alt="预览图片" class="preview-img" />
