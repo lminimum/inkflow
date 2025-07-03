@@ -1,22 +1,36 @@
 <template>
-  <div class="layout-container">
-    <SidebarMenu :is-dark="isDark" :top-items="topNavItems" :on-setting-click="showThemeSettings"
-      @item-click="handleNavClick" />
-    <div class="main-container">
-      <!-- 全局Tab组件 -->
-      <GlobalTabs :tabs="tabs" :modelValue="activeTab" @update:modelValue="switchTab" />
-      <div class="main-content">
-        <div class="header">
-          <span style="font-size: larger">
-            {{ route.meta.title }}
-          </span>
-        </div>
-        <div class="content-container">
-          <router-view />
-        </div>
+  <div style="background-color: var(--card-bg)">
+    <div class="custom-titlebar">
+      <div class="window-title"></div>
+      <div class="window-controls-fixed">
+        <MinusOutlined class="window-btn" @click="minimize" />
+        <BorderOutlined class="window-btn" style="font-size: 14px" @click="maximize" />
+        <CloseOutlined class="window-btn" @click="close" />
       </div>
     </div>
-    <ThemeSettings :open="themeSettingsOpen" @close="handleThemeSettingsClose" />
+    <div class="layout-container">
+      <SidebarMenu
+        :is-dark="isDark"
+        :top-items="topNavItems"
+        :on-setting-click="showThemeSettings"
+        @item-click="handleNavClick"
+      />
+      <div class="main-container">
+        <!-- 全局Tab组件 -->
+        <GlobalTabs :tabs="tabs" :model-value="activeTab" @update:model-value="switchTab" />
+        <div class="main-content">
+          <div class="header">
+            <span style="font-size: larger">
+              {{ route.meta.title }}
+            </span>
+          </div>
+          <div class="content-container">
+            <router-view />
+          </div>
+        </div>
+      </div>
+      <ThemeSettings :open="themeSettingsOpen" @close="handleThemeSettingsClose" />
+    </div>
   </div>
 </template>
 
@@ -25,12 +39,36 @@ import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import SidebarMenu from '@renderer/components/SidebarMenu.vue'
 import GlobalTabs from '@renderer/components/GlobalTabs.vue'
-import { HomeOutlined, EditOutlined, DatabaseOutlined, CodeOutlined } from '@ant-design/icons-vue'
+import {
+  HomeOutlined,
+  EditOutlined,
+  DatabaseOutlined,
+  CodeOutlined,
+  MinusOutlined,
+  BorderOutlined,
+  CloseOutlined
+} from '@ant-design/icons-vue'
 import ThemeSettings from '@renderer/components/ThemeSettings.vue'
+
+declare global {
+  interface Window {
+    electronAPI?: {
+      minimize: () => void
+      maximize: () => void
+      close: () => void
+    }
+  }
+}
+
 const isDark = ref(false)
 const showThemeSettings = (): void => {
   themeSettingsOpen.value = true
 }
+
+// 自定义窗口控制
+const minimize = (): void => window.electronAPI?.minimize()
+const maximize = (): void => window.electronAPI?.maximize()
+const close = (): void => window.electronAPI?.close()
 
 // Tab配置
 const tabs = [
@@ -86,6 +124,50 @@ const handleThemeSettingsClose = (): void => {
 </script>
 
 <style scoped>
+.custom-titlebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  -webkit-app-region: drag;
+  z-index: 10000;
+  user-select: none;
+}
+/* .window-title {
+  font-size: 16px;
+  padding-left: 16px;
+  font-weight: bold;
+} */
+.window-controls-fixed {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 100%;
+  margin-right: 12px;
+  -webkit-app-region: no-drag;
+}
+.window-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color);
+  font-size: 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+.window-btn:hover {
+  background: var(--primary-color);
+  color: var(--text-color);
+}
 .layout-container {
   display: flex;
   height: 100vh;

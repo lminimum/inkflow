@@ -45,7 +45,7 @@ watch(
 )
 
 // 同步Tab变化到路由和父组件
-const handleTabClick = (key: string) => {
+const handleTabClick = (key: string): void => {
   activeKey.value = key
   emit('update:modelValue', key)
   const matchedTab = props.tabs.find((tab) => tab.key === key)
@@ -68,18 +68,19 @@ watch(
 <style scoped>
 .tab-container {
   display: flex;
-  padding-top: 0.8rem;
-  background-color: var(--card-bg);
+  margin-top: 30px;
+  -webkit-app-region: drag;
 }
 
 .tab-item {
-  padding: 12px 24px;
+  padding: 0 24px 8px 24px;
   cursor: pointer;
   border-bottom: 2px solid transparent;
   background-color: var(--card-bg);
   color: var(--text-primary);
   transition: all 0.3s ease;
   font-size: medium;
+  -webkit-app-region: no-drag;
 }
 
 .tab-item:hover {

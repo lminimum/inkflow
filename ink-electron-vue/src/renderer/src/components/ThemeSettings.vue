@@ -4,9 +4,9 @@
     :width="300"
     :open="open"
     placement="right"
-    @close="onClose"
-    style="background-color: var(--bg-color)"
     :close-icon="customCloseIcon"
+    style="background-color: var(--bg-color); padding-top: 40px"
+    @close="onClose"
   >
     <template #title>
       <span style="color: var(--text-primary); font-weight: bold">主题设置</span>
@@ -28,16 +28,16 @@
           class="color-option"
           :style="{ backgroundColor: option.value }"
           :class="{ selected: primaryColor === option.value }"
-          @click="handlePrimaryColorChange(option.value)"
           :title="option.name"
+          @click="handlePrimaryColorChange(option.value)"
         ></div>
       </div>
     </div>
 
     <template #extra>
       <a-button
-        @click="resetDefault"
         style="color: var(--text-primary); background-color: var(--bg-color)"
+        @click="resetDefault"
         >重置默认</a-button
       >
     </template>
@@ -70,7 +70,7 @@ const colorOptions = [
 ]
 
 // 颜色处理工具函数
-const getHoverColor = (color: string) => {
+const getHoverColor = (color: string): string => {
   // 将十六进制颜色转换为RGB
   const r = parseInt(color.slice(1, 3), 16)
   const g = parseInt(color.slice(3, 5), 16)
