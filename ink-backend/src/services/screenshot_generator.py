@@ -14,9 +14,10 @@ from pathlib import Path
 from playwright.async_api import async_playwright
 import logging
 from typing import Optional
+import traceback
 
 # 设置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 
@@ -50,69 +51,83 @@ class ScreenshotGenerator:
         Returns:
             bool: 是否成功生成截图
         """
+        # 规范化路径，去除可能的空格
+        html_file = html_file.strip() if isinstance(html_file, str) else html_file
+        
+        # 如果未指定输出路径，使用HTML文件名+.png
+        if output_path is None:
+            output_path = html_file.replace('.html', '.png')
+        
+        # 确保路径是绝对路径
+        if not os.path.isabs(html_file):
+            html_file = os.path.abspath(html_file)
+            logger.debug(f"转换为绝对路径: {html_file}")
+        
+        if not os.path.isabs(output_path):
+            output_path = os.path.abspath(output_path)
+            logger.debug(f"转换为绝对路径: {output_path}")
+        
+        # 确保输出路径存在
+        output_dir = os.path.dirname(output_path)
+        os.makedirs(output_dir, exist_ok=True)
+        logger.debug(f"确保输出目录存在: {output_dir}")
+        
+        # 检查HTML文件是否存在
+        if not os.path.exists(html_file):
+            logger.error(f"HTML文件不存在: {html_file}")
+            return False
+        
+        # 使用file://协议加载本地文件
+        file_url = f"file://{os.path.abspath(html_file)}"
+        logger.debug(f"文件URL: {file_url}")
+        
+        logger.info(f"开始生成截图: {html_file} -> {output_path}")
+        
         try:
-            html_path = Path(html_file)
-            if not html_path.exists():
-                logger.error(f"HTML文件不存在: {html_file}")
-                return False
-            
-            # 确定输出路径
-            if output_path is None:
-                screenshot_path = html_path.with_suffix(".png")
-            else:
-                screenshot_path = Path(output_path)
-            
-            logger.info(f"开始生成截图: {html_file} -> {screenshot_path}")
-            
-            async with async_playwright() as p:
-                # 启动浏览器
-                browser = await p.chromium.launch(headless=headless)
-                page = await browser.new_page(viewport={"width": width, "height": height or 667})
-                
-                # 加载HTML文件
-                file_url = f"file:///{html_path.absolute()}"
-                await page.goto(file_url)
-                
-                # 等待页面加载完成
-                await page.wait_for_load_state("networkidle")
-                await asyncio.sleep(wait_time)  # 额外等待确保样式加载完成
-                
-                # 自动获取内容高度
-                if height is None:
-                    body_height = await page.evaluate("document.body.scrollHeight")
-                    logger.info(f"自动检测到页面高度: {body_height}")
-                    await page.set_viewport_size({"width": width, "height": body_height})
-                    height_to_use = body_height
-                else:
-                    height_to_use = height
-                
-                # 截图配置
-                screenshot_options = {
-                    "path": screenshot_path,
-                    "full_page": full_page
-                }
-                
-                # 如果不是全页截图，设置裁剪区域
-                if not full_page:
-                    screenshot_options["clip"] = {
-                        "x": 0, 
-                        "y": 0, 
-                        "width": width, 
-                        "height": height_to_use
-                    }
-                
-                # 生成截图
-                await page.screenshot(**screenshot_options)
-                
-                await browser.close()
-                
-                logger.info(f"截图生成成功: {screenshot_path}")
-                return True
-                
+            # 使用异步 API 生成截图
+            logger.debug("调用异步截图方法")
+            return await self._take_screenshot_async(file_url, output_path, width, height, headless, full_page, wait_time)
         except Exception as e:
-            logger.error(f"截图生成失败: {e}")
-            import traceback
-            logger.error(f"错误详情:\n{traceback.format_exc()}")
+            logger.error(f"截图生成失败:")
+            logger.error(f"错误详情:\n{str(e)}")
+            logger.error(f"堆栈跟踪:\n{traceback.format_exc()}")
+            return False
+    
+    async def _take_screenshot_async(self, file_url, output_path, width, height, headless, full_page, wait_time):
+        """使用异步 API 生成截图"""
+        logger.debug(f"异步截图开始: {file_url} -> {output_path}")
+        logger.debug(f"参数: width={width}, height={height}, headless={headless}, full_page={full_page}, wait_time={wait_time}")
+        
+        try:
+            logger.debug("初始化 async_playwright")
+            async with async_playwright() as p:
+                logger.debug("启动浏览器")
+                browser = await p.chromium.launch(headless=headless)
+                try:
+                    logger.debug("创建新页面")
+                    page = await browser.new_page(viewport={"width": width, "height": height})
+                    
+                    logger.debug(f"导航到 URL: {file_url}")
+                    await page.goto(file_url)
+                    
+                    logger.debug(f"等待 {wait_time} 秒")
+                    await page.wait_for_timeout(int(wait_time * 1000))  # 毫秒
+                    
+                    logger.debug(f"截图保存到: {output_path}")
+                    await page.screenshot(path=output_path, full_page=full_page)
+                    
+                    logger.debug("截图成功")
+                    return True
+                except Exception as e:
+                    logger.error(f"页面操作失败: {str(e)}")
+                    logger.error(traceback.format_exc())
+                    return False
+                finally:
+                    logger.debug("关闭浏览器")
+                    await browser.close()
+        except Exception as e:
+            logger.error(f"Playwright 初始化失败: {str(e)}")
+            logger.error(traceback.format_exc())
             return False
     
     async def batch_screenshot(

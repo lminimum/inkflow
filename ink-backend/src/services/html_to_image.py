@@ -5,7 +5,7 @@
 """
 import argparse
 import asyncio
-from services.screenshot_generator import ScreenshotGenerator
+from src.services.screenshot_generator import ScreenshotGenerator
 
 def main():
     parser = argparse.ArgumentParser(description='将HTML文件转为图片')

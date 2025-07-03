@@ -9,25 +9,18 @@ import os
 import logging
 from logging.handlers import RotatingFileHandler
 from fastapi import FastAPI, HTTPException, BackgroundTasks
-from fastapi.responses import Response, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field, ConfigDict
-from src.services.ai_providers import AIProviderFactory, AIProvider
-import requests
+from pydantic import BaseModel, Field
+from src.services.ai_providers import AIProviderFactory
 import asyncio
 import json
 from dotenv import load_dotenv
-from src.services.html_creator import HTMLCreator # Keep HTMLCreator factory
+from src.services.html_creator import HTMLCreator
 import uuid
 from src.services.hotspot_service import HotspotService
-
-# Import new generator classes
-from src.services.html_generation.title_generator import TitleGenerator
-from src.services.html_generation.css_generator import CSSGenerator
-from src.services.html_generation.content_generator import ContentGenerator
-from src.services.html_generation.content_splitter import ContentSplitter
-from src.services.html_generation.html_builder import HTMLBuilder
-from src.services.screenshot_generator import ScreenshotGenerator
+import concurrent.futures
+# 导入同步截图函数
+from src.services.screenshot_sync import take_screenshot
 
 # 加载环境变量
 load_dotenv()
@@ -247,21 +240,74 @@ async def generate_html_section(request: SectionHTMLRequest):
 @app.post("/api/html-to-image")
 async def html_to_image(request: HtmlToImageRequest, background_tasks: BackgroundTasks):
     """将HTML文件转为图片"""
-    generator = ScreenshotGenerator()
-    # 启动截图任务
-    result = await generator.take_screenshot(
-        html_file=request.html_path,
-        output_path=request.output_path,
-        width=request.width,
-        height=request.height,
-        headless=True,
-        full_page=request.full_page,
-        wait_time=request.wait_time
-    )
-    if result:
-        return {"success": True, "output_path": request.output_path or request.html_path.replace('.html', '.png')}
-    else:
-        return {"success": False, "msg": "截图失败"}
+    try:
+        # 检查文件路径
+        html_path = request.html_path
+        
+        # 如果是相对路径，转换为绝对路径
+        if not os.path.isabs(html_path):
+            html_path = os.path.abspath(html_path)
+            logger.debug(f"HTML路径转换为绝对路径: {html_path}")
+        
+        # 检查文件是否存在
+        if not os.path.exists(html_path):
+            error_msg = f"HTML文件不存在: {html_path}"
+            logger.error(error_msg)
+            return {"success": False, "msg": error_msg}
+        
+        # 处理输出路径
+        output_path = request.output_path
+        if output_path:
+            if not os.path.isabs(output_path):
+                output_path = os.path.abspath(output_path)
+                logger.debug(f"输出路径转换为绝对路径: {output_path}")
+        else:
+            output_path = html_path.replace('.html', '.png')
+            logger.debug(f"自动生成输出路径: {output_path}")
+        
+        # 确保输出目录存在
+        output_dir = os.path.dirname(output_path)
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # 使用线程池运行同步截图代码
+        logger.info(f"使用线程池生成截图: {html_path} -> {output_path}")
+        
+        # 创建线程池执行同步截图函数
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            # 将同步函数包装在线程池中执行
+            loop = asyncio.get_event_loop()
+            result = await loop.run_in_executor(
+                executor, 
+                take_screenshot,
+                html_path,
+                output_path,
+                request.width,
+                request.height,
+                True,  # headless
+                request.full_page,
+                request.wait_time
+            )
+        
+        # 检查结果
+        if result:
+            logger.info(f"截图生成成功: {output_path}")
+            
+            if os.path.exists(output_path):
+                file_size = os.path.getsize(output_path)
+                logger.info(f"文件大小: {file_size} 字节")
+                return {"success": True, "output_path": output_path, "file_size": file_size}
+            else:
+                error_msg = f"截图生成成功但文件不存在: {output_path}"
+                logger.error(error_msg)
+                return {"success": False, "msg": error_msg}
+        else:
+            error_msg = "截图生成失败"
+            logger.error(error_msg)
+            return {"success": False, "msg": error_msg}
+    except Exception as e:
+        error_msg = f"截图生成过程中发生错误: {str(e)}"
+        logger.error(error_msg, exc_info=True)
+        return {"success": False, "msg": error_msg}
 
 @app.get("/api/hotspots")
 async def get_hotspots():
