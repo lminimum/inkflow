@@ -17,18 +17,18 @@
 
 /* 暗色主题变量 */
 :root[data-theme='dark'] {
-  --primary-color: #40a9ff;
-  --primary-hover: #096dd9;
-  --primary-light: #0d1117;
-  --bg-color: #303030;
-  --card-bg: #2a2a2a;
-  --text-primary: #e8e8e8;
-  --text-secondary: #999999;
-  --border-color: #a9a9a96f;
-  --hover-color: #272727;
-  --rank-bg: #272727;
-  --rank-color: #ff7a45;
-  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --primary-color: #c3073f; /* Vampire Red */
+  --primary-hover: #950740; /* 深吸血鬼红 */
+  --primary-light: #1a1a2e; /* 深夜蓝紫，提升层次 */
+  --bg-color: #16161a; /* 极深背景 */
+  --card-bg: #232136; /* 吸血鬼紫灰，卡片背景 */
+  --text-primary: #e0def4; /* 柔和浅紫白，主文字 */
+  --text-secondary: #a3a3c2; /* 淡紫灰，次要文字 */
+  --border-color: #393552; /* 深紫灰，边框 */
+  --hover-color: #2a283e; /* 悬停深紫 */
+  --rank-bg: #393552; /* 排名背景 */
+  --rank-color: #eb6f92; /* 吸血鬼粉红，强调色 */
+  --card-shadow: 0 2px 8px rgba(44, 7, 41, 0.5); /* 深紫阴影 */
 }
 
 /* 全局样式重置 */

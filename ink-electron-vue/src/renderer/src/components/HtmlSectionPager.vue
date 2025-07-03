@@ -1,15 +1,15 @@
 <template>
-  <div class="pager-container" ref="pagerContainer" v-if="props.sections && props.sections.length">
+  <div v-if="props.sections && props.sections.length" ref="pagerContainer" class="pager-container">
     <button class="pager-btn" :disabled="currentIndex === 0" @click="prev">&#8592;</button>
     <div class="pager-content">
-      <div class="iframe-container" ref="containerRef">
-        <div class="iframe-scaler" ref="scalerRef">
+      <div ref="containerRef" class="iframe-container">
+        <div ref="scalerRef" class="iframe-scaler">
           <iframe
+            ref="iframeRef"
             :srcdoc="currentSection"
             class="html-iframe"
             frameborder="0"
             scrolling="no"
-            ref="iframeRef"
           ></iframe>
         </div>
       </div>
@@ -60,16 +60,16 @@ watch(
   }
 )
 
-const prev = () => {
+const prev = (): void => {
   if (currentIndex.value > 0) currentIndex.value--
 }
-const next = () => {
+const next = (): void => {
   if (props.sections && currentIndex.value < props.sections.length - 1) currentIndex.value++
 }
 
 // 让iframe高度自适应内容，并同步缩放后高度到外层容器
 const scale = 0.643
-const setIframeHeight = () => {
+const setIframeHeight = (): void => {
   if (iframeRef.value && scalerRef.value && containerRef.value) {
     try {
       const iframe = iframeRef.value
@@ -112,7 +112,7 @@ export default {}
   min-height: 300px;
   box-sizing: border-box;
   padding: 2rem 0;
-  background: #f8f8f8;
+  background: var(--bg-color);
   overflow-x: auto;
 }
 .pager-btn {

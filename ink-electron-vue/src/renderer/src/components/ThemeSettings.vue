@@ -106,7 +106,7 @@ const getHoverColor = (color: string): string => {
   l = Math.max(0, Math.min(1, l - 0.1))
 
   // 将HSL转换回十六进制
-  const hue2rgb = (p: number, q: number, t: number) => {
+  const hue2rgb = (p: number, q: number, t: number): number => {
     if (t < 0) t += 1
     if (t > 1) t -= 1
     if (t < 1 / 6) return p + (q - p) * 6 * t
@@ -160,20 +160,20 @@ onMounted(() => {
 })
 
 // 应用主题设置到CSS变量
-const applyThemeSettings = () => {
+const applyThemeSettings = (): void => {
   document.documentElement.style.setProperty('--primary-color', primaryColor.value)
   document.documentElement.style.setProperty('--primary-hover', primaryHoverColor.value)
   document.documentElement.setAttribute('data-theme', themeMode.value)
 }
 
 // 处理主题模式变更
-const handleThemeModeChange = () => {
+const handleThemeModeChange = (): void => {
   applyThemeSettings()
   saveThemeSettings()
 }
 
 // 处理主色调变更
-const handlePrimaryColorChange = (color: string) => {
+const handlePrimaryColorChange = (color: string): void => {
   primaryColor.value = color
   primaryHoverColor.value = getHoverColor(color)
   applyThemeSettings()
@@ -181,7 +181,7 @@ const handlePrimaryColorChange = (color: string) => {
 }
 
 // 保存主题设置到本地存储
-const saveThemeSettings = () => {
+const saveThemeSettings = (): void => {
   const settings = {
     themeMode: themeMode.value,
     primaryColor: primaryColor.value,
@@ -192,7 +192,7 @@ const saveThemeSettings = () => {
 }
 
 // 重置默认设置
-const resetDefault = () => {
+const resetDefault = (): void => {
   themeMode.value = 'light'
   primaryColor.value = '#1677ff'
   primaryHoverColor.value = getHoverColor('#1677ff')

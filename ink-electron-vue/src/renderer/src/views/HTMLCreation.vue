@@ -21,7 +21,7 @@
             height: 420px;
             max-width: 700px;
             margin: 0 auto;
-            background: #fff;
+            background: var(--bg-color);
             border-radius: 8px;
             box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.04);
             overflow: hidden;
@@ -42,9 +42,9 @@
             <div class="form-group">
               <label for="theme">主题</label>
               <input
-                type="text"
                 id="theme"
                 v-model="formData.theme"
+                type="text"
                 required
                 placeholder="输入主题"
               />
@@ -84,9 +84,9 @@
             <div class="form-group">
               <label for="numSections">生成数量</label>
               <input
-                type="number"
                 id="numSections"
                 v-model.number="formData.numSections"
+                type="number"
                 min="1"
                 max="20"
                 required
@@ -132,7 +132,7 @@
 <script setup lang="ts">
 import { ref, onMounted, reactive } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useHtmlStore, type HtmlSectionItem } from '../store/htmlStore'
+import { useHtmlStore } from '../store/htmlStore'
 import HtmlSectionPager from '../components/HtmlSectionPager.vue'
 // ...其他导入
 import {
@@ -186,7 +186,7 @@ const currentStage = ref('')
 const debugResults = reactive<Array<{ label: string; value: string }>>([])
 
 // 生成HTML
-const handleGenerateHtml = async () => {
+const handleGenerateHtml = async (): Promise<void> => {
   // 表单验证
   if (!formData.value.theme || !formData.value.style || !formData.value.audience) {
     alert('请填写所有必填字段')
@@ -283,7 +283,7 @@ const handleGenerateHtml = async () => {
           sectionHtmlArr.push('生成失败')
         }
       } catch (err) {
-        sectionHtmlArr.push('生成失败')
+        sectionHtmlArr.push('生成失败' + err)
       }
     }
     if (htmlStore.htmlSections.length === 0) {
@@ -296,22 +296,23 @@ const handleGenerateHtml = async () => {
     isGenerating.value = false
     debugResults.push({ label: '最终HTML', value: '已生成' })
     currentStage.value = ''
-  } catch (error: any) {
-    alert(`生成失败: ${error.message || error}`) // 改进错误提示
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    alert(`生成失败: ${message}`)
     isGenerating.value = false
     currentStage.value = ''
   }
 }
 
 // 复制完整HTML到剪贴板
-const copyHtml = () => {
+const copyHtml = (): void => {
   if (!fullGeneratedHtml.value) return
   navigator.clipboard.writeText(fullGeneratedHtml.value)
   alert('HTML内容已复制到剪贴板')
 }
 
 // 在新窗口预览完整HTML
-const previewInNewTab = () => {
+const previewInNewTab = (): void => {
   if (!fullGeneratedHtml.value) return
   const newWindow = window.open('', '_blank')
   if (newWindow) {
@@ -410,8 +411,8 @@ onMounted(() => {
   flex: 1;
   padding: 1.5rem;
   overflow: visible;
-  background: white;
-  color: black;
+  background: var(--bg-color);
+  color: var(--text-primary);
   min-height: 300px;
   white-space: nowrap;
 }
@@ -495,27 +496,27 @@ onMounted(() => {
   border-radius: 8px;
   /* margin-bottom: 1rem; */ /* 移除底部 margin */
   padding: 1.5rem;
-  background: #fff;
-  color: #222;
+  background: var(--bg-color);
+  color: var(--text-primary);
   box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.04);
   min-height: 200px;
   overflow-x: auto; /* 允许单个 section 内部滚动 */
 }
 
 .debug-info {
-  background: #f7f7f7;
-  border: 1px solid #eee;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   margin: 1.5rem 0 0 0;
   padding: 1rem;
   font-size: 0.95rem;
-  color: #333;
+  color: var(--text-primary);
   max-height: 350px;
   overflow: auto;
 }
 
 .debug-stage {
-  color: #1976d2;
+  color: var(--primary-color);
   font-weight: bold;
   margin-bottom: 0.5rem;
 }
@@ -526,12 +527,12 @@ onMounted(() => {
 
 .debug-label {
   font-weight: bold;
-  color: #555;
+  color: var(--text-secondary);
 }
 
 .debug-value {
-  background: #fff;
-  border: 1px solid #eee;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   padding: 0.5em;
   font-family: monospace;

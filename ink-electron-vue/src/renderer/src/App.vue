@@ -1,6 +1,6 @@
 <template>
   <div style="background-color: var(--card-bg)">
-    <div class="custom-titlebar">
+    <div v-if="isElectron" class="custom-titlebar">
       <div class="window-title"></div>
       <div class="window-controls-fixed">
         <MinusOutlined class="window-btn" @click="minimize" />
@@ -43,7 +43,7 @@ import {
   HomeOutlined,
   EditOutlined,
   DatabaseOutlined,
-  CodeOutlined,
+  BuildOutlined,
   MinusOutlined,
   BorderOutlined,
   CloseOutlined
@@ -91,7 +91,7 @@ const switchTab = (tab: string): void => {
 const creationNavItems = [
   { to: '/', icon: HomeOutlined },
   { to: '/ai-creation', icon: EditOutlined },
-  { to: '/html-creation', icon: CodeOutlined }
+  { to: '/html-creation', icon: BuildOutlined }
 ]
 
 const modelNavItems = [{ to: '/models', icon: DatabaseOutlined }]
@@ -121,6 +121,8 @@ const handleNavClick = (item: { to?: string; handler?: () => void }): void => {
 const handleThemeSettingsClose = (): void => {
   themeSettingsOpen.value = false
 }
+
+const isElectron = typeof window !== 'undefined' && !!window.electronAPI
 </script>
 
 <style scoped>

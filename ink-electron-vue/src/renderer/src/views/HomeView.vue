@@ -25,8 +25,8 @@
         <h3 style="color: #333">AI创作</h3>
       </div>
       <div class="nav-card card-color-2" @click="router.push('/html-creation')">
-        <CodeOutlined />
-        <h3 style="color: #333">HTML生成</h3>
+        <BuildOutlined />
+        <h3 style="color: #333">图文生成</h3>
       </div>
       <div class="nav-card card-color-3" @click="router.push('/data-analysis')">
         <BarChartOutlined />
@@ -52,7 +52,7 @@
         <div class="hot-topics-section">
           <h2 class="section-title">全网热点</h2>
           <div class="hot-list">
-            <div class="hot-item" v-for="(hot, i) in hotTopics" :key="i">
+            <div v-for="(hot, i) in hotTopics" :key="i" class="hot-item">
               <span class="hot-rank">{{ i + 1 }}</span>
               <span class="hot-title">{{ hot.title }}</span>
             </div>
@@ -65,7 +65,7 @@
         <div class="realtime-section">
           <h2 class="section-title">实时爆文</h2>
           <div class="realtime-list">
-            <div class="realtime-item" v-for="(article, i) in realtimeArticles" :key="i">
+            <div v-for="(article, i) in realtimeArticles" :key="i" class="realtime-item">
               <span class="realtime-rank">{{ i + 1 }}</span>
               <div class="realtime-content">
                 <h3 class="realtime-title">{{ article.title }}</h3>
@@ -81,7 +81,7 @@
         <div class="fans-ranking-section">
           <h2 class="section-title">粉丝量排行榜</h2>
           <div class="ranking-list">
-            <div class="ranking-item" v-for="(author, i) in authorRanking" :key="i">
+            <div v-for="(author, i) in authorRanking" :key="i" class="ranking-item">
               <span class="rank-number">{{ i + 1 }}</span>
               <div class="author-info">
                 <div class="author-avatar">{{ author.name.charAt(0) }}</div>
@@ -99,13 +99,12 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useRouter } from 'vue-router'
 const router = useRouter()
 import {
   EditOutlined,
-  CodeOutlined,
-  PlusOutlined,
+  BuildOutlined,
   BarChartOutlined,
   DatabaseOutlined,
   SettingOutlined,
