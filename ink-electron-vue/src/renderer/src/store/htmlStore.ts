@@ -3,6 +3,8 @@ import { defineStore } from 'pinia'
 export interface HtmlSectionItem {
   html: string
   file_path?: string
+  html_url?: string
+  section_id?: string
 }
 
 export const useHtmlStore = defineStore('html', {

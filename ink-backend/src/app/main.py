@@ -10,6 +10,8 @@ import logging
 from logging.handlers import RotatingFileHandler
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from src.services.ai_providers import AIProviderFactory
 import asyncio
@@ -65,6 +67,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 定义输出目录路径
+OUTPUT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../outputs'))
+HTML_OUTPUT_DIR = os.path.join(OUTPUT_DIR, 'html_outputs')
+
+# 确保输出目录存在
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+os.makedirs(HTML_OUTPUT_DIR, exist_ok=True)
+
+# 挂载静态文件目录
+app.mount("/static", StaticFiles(directory=OUTPUT_DIR), name="static")
 
 # 请求模型定义
 class Message(BaseModel):
@@ -226,13 +239,27 @@ async def generate_html_section(request: SectionHTMLRequest):
                 description=request.description,
                 css_style=request.css_style
             )
-        # 保存到/tests/test_outputs/
-        output_dir = os.path.join(os.path.dirname(__file__), '../../outputs/html_outputs')
-        os.makedirs(output_dir, exist_ok=True)
-        file_path = os.path.join(output_dir, f'section_{uuid.uuid4().hex}.html')
-        with open(file_path, 'w', encoding='utf-8') as f:
+        # 保存到输出目录
+        section_id = uuid.uuid4().hex
+        html_filename = f'section_{section_id}.html'
+        html_path = os.path.join(HTML_OUTPUT_DIR, html_filename)
+        
+        # 确保输出目录存在
+        os.makedirs(os.path.dirname(html_path), exist_ok=True)
+        
+        # 保存 HTML 文件
+        with open(html_path, 'w', encoding='utf-8') as f:
             f.write(section_html)
-        return {"html": section_html, "file_path": file_path}
+        
+        # 生成 HTML 文件的 URL
+        html_url = f"/static/html_outputs/{html_filename}"
+        
+        return {
+            "html": section_html, 
+            "file_path": html_path,
+            "html_url": html_url,
+            "section_id": section_id
+        }
     except Exception as e:
         logger.error(f"生成内容区块HTML失败: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"生成内容区块HTML失败: {str(e)}")
@@ -262,7 +289,10 @@ async def html_to_image(request: HtmlToImageRequest, background_tasks: Backgroun
                 output_path = os.path.abspath(output_path)
                 logger.debug(f"输出路径转换为绝对路径: {output_path}")
         else:
-            output_path = html_path.replace('.html', '.png')
+            # 使用 HTML 文件名作为图片名，保存到 HTML_OUTPUT_DIR 目录
+            html_filename = os.path.basename(html_path)
+            image_filename = html_filename.replace('.html', '.png')
+            output_path = os.path.join(HTML_OUTPUT_DIR, image_filename)
             logger.debug(f"自动生成输出路径: {output_path}")
         
         # 确保输出目录存在
@@ -293,9 +323,20 @@ async def html_to_image(request: HtmlToImageRequest, background_tasks: Backgroun
             logger.info(f"截图生成成功: {output_path}")
             
             if os.path.exists(output_path):
+                # 获取文件大小
                 file_size = os.path.getsize(output_path)
                 logger.info(f"文件大小: {file_size} 字节")
-                return {"success": True, "output_path": output_path, "file_size": file_size}
+                
+                # 生成图片 URL
+                image_filename = os.path.basename(output_path)
+                image_url = f"/api/images/{image_filename}"
+                
+                return {
+                    "success": True, 
+                    "output_path": output_path, 
+                    "file_size": file_size,
+                    "image_url": image_url
+                }
             else:
                 error_msg = f"截图生成成功但文件不存在: {output_path}"
                 logger.error(error_msg)
@@ -331,6 +372,19 @@ async def analyze_hotspots(request: HotspotAnalyzeRequest):
     except Exception as e:
         logger.error(f"热点分析失败: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"热点分析失败: {str(e)}")
+
+@app.get("/api/images/{image_name}")
+async def get_image(image_name: str):
+    """获取图片文件"""
+    # 构建图片路径
+    image_path = os.path.join(HTML_OUTPUT_DIR, image_name)
+    
+    # 检查文件是否存在
+    if not os.path.exists(image_path):
+        raise HTTPException(status_code=404, detail=f"图片不存在: {image_name}")
+    
+    # 返回图片文件
+    return FileResponse(image_path)
 
 if __name__ == "__main__":
     import uvicorn

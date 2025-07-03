@@ -69,7 +69,9 @@ export interface SectionHTMLRequestParams {
  */
 export interface SectionHTMLResponse {
   html: string // 单个内容区块的HTML片段
-  file_path?: string // 新增：后端返回的文件路径
+  file_path?: string // 后端返回的文件路径
+  html_url?: string // 新增：后端返回的HTML文件URL
+  section_id?: string // 新增：后端返回的区块ID
 }
 
 /**
@@ -222,7 +224,9 @@ export const generateSectionHtml = async (
       // 支持 file_path 字段
       return {
         html: (responseData as any).html,
-        file_path: (responseData as any).file_path || undefined
+        file_path: (responseData as any).file_path || undefined,
+        html_url: (responseData as any).html_url || undefined,
+        section_id: (responseData as any).section_id || undefined
       }
     } else {
       throw new Error('从后端获取内容区块HTML失败或格式不正确。')

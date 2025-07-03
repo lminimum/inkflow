@@ -282,10 +282,12 @@ const handleGenerateHtml = async (): Promise<void> => {
       try {
         const sectionHtmlResponse = await generateSectionHtml(sectionHtmlParams)
         if (sectionHtmlResponse && sectionHtmlResponse.html) {
-          // 存储 html 及 file_path
+          // 存储 html、file_path 和 html_url
           htmlStore.addHtmlSection({
             html: sectionHtmlResponse.html,
-            file_path: sectionHtmlResponse.file_path
+            file_path: sectionHtmlResponse.file_path,
+            html_url: sectionHtmlResponse.html_url,
+            section_id: sectionHtmlResponse.section_id
           })
           sectionHtmlArr.push('已生成')
         } else {
@@ -331,8 +333,8 @@ const previewInNewTab = (): void => {
 }
 
 const goToPrePublish = (): void => {
-  // 取第一个区块的 file_path 作为 html 路径，主题文案用 formData.value.theme
-  const htmlPath = htmlStore.htmlSections[0]?.file_path || ''
+  // 优先使用 html_url，如果没有则使用 file_path
+  const htmlPath = htmlStore.htmlSections[0]?.html_url || htmlStore.htmlSections[0]?.file_path || ''
   const theme = formData.value.theme
   router.push({
     path: '/prepublish',

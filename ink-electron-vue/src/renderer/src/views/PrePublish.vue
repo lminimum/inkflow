@@ -18,9 +18,9 @@
             <label>主题文案：</label>
             <input v-model="themeText" placeholder="请输入主题文案" class="theme-input" />
           </div>
-          <div v-if="imgPath" class="img-preview-wrapper">
+          <div v-if="imgUrl" class="img-preview-wrapper">
             <h3>图片预览</h3>
-            <img :src="imgPath" alt="预览图片" class="preview-img" />
+            <img :src="imgUrl" alt="预览图片" class="preview-img" />
           </div>
           <div v-if="errorMsg" class="prepublish-error">{{ errorMsg }}</div>
         </div>
@@ -63,9 +63,14 @@ const outputPath = ref('')
 const width = ref(375)
 const height = ref(667)
 const themeText = ref('')
-const imgPath = ref('')
+const imgUrl = ref('')
 const errorMsg = ref('')
 const loading = ref(false)
+
+// 获取API基础URL
+const getApiBaseUrl = (): string => {
+  return import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+}
 
 const handleConvert = async (): Promise<void> => {
   if (!htmlPath.value) {
@@ -74,7 +79,7 @@ const handleConvert = async (): Promise<void> => {
   }
   errorMsg.value = ''
   loading.value = true
-  imgPath.value = ''
+  imgUrl.value = ''
   try {
     const res = await htmlToImage({
       html_path: htmlPath.value,
@@ -82,8 +87,16 @@ const handleConvert = async (): Promise<void> => {
       width: width.value,
       height: height.value
     })
-    if (res.success && res.output_path) {
-      imgPath.value = res.output_path
+    if (res.success) {
+      if (res.image_url) {
+        // 使用返回的图片URL
+        imgUrl.value = getApiBaseUrl() + res.image_url
+      } else if (res.output_path) {
+        // 兼容旧版API，使用文件路径
+        imgUrl.value = 'file://' + res.output_path
+      } else {
+        errorMsg.value = '生成成功但未返回图片URL'
+      }
     } else {
       errorMsg.value = res.msg || '生成失败'
     }

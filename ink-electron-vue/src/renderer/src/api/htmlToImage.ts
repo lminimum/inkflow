@@ -12,6 +12,8 @@ export interface HtmlToImageParams {
 export interface HtmlToImageResponse {
   success: boolean
   output_path?: string
+  image_url?: string
+  file_size?: number
   msg?: string
 }
 
