@@ -12,10 +12,11 @@ class HTMLBuilder(BaseGenerator):
             css_style=css_style
         )
         html = await self.call_ai_service(prompt)
-        # 更强力去除 markdown 代码块标记
-        html = re.sub(r'```html[\s\S]*?```', '', html, flags=re.IGNORECASE).strip()
-        html = re.sub(r'```[\s\S]*?```', '', html, flags=re.IGNORECASE).strip()
-        return html
+        # 只去除开头和结尾的 markdown 代码块标记
+        html = re.sub(r'^```html\s*', '', html, flags=re.IGNORECASE)
+        html = re.sub(r'^```\s*', '', html, flags=re.IGNORECASE)
+        html = re.sub(r'```\s*$', '', html, flags=re.IGNORECASE)
+        return html.strip()
 
     async def generate_section_html(self, content, section_num):
         """生成单个内容区块的HTML"""

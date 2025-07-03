@@ -32,7 +32,6 @@
 
 <script setup lang="ts">
 import { ref, watch, watchEffect, onMounted, nextTick } from "vue";
-import { defineProps } from 'vue';
 
 interface HtmlSectionItem {
   html: string;
