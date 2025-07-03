@@ -23,10 +23,10 @@
 <script lang="ts" setup>
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import SidebarMenu from '@/components/SidebarMenu.vue'
-import GlobalTabs from '@/components/GlobalTabs.vue'
+import SidebarMenu from '@renderer/components/SidebarMenu.vue'
+import GlobalTabs from '@renderer/components/GlobalTabs.vue'
 import { HomeOutlined, EditOutlined, DatabaseOutlined, CodeOutlined } from '@ant-design/icons-vue'
-import ThemeSettings from '@/components/ThemeSettings.vue'
+import ThemeSettings from '@renderer/components/ThemeSettings.vue'
 const isDark = ref(false)
 const showThemeSettings = (): void => {
   themeSettingsOpen.value = true

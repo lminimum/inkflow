@@ -7,22 +7,22 @@ export default createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('@/views/HomeView.vue'),
+      component: () => import('@renderer/views/HomeView.vue'),
       meta: { title: '主页' }
     },
     {
       path: '/ai-creation',
-      component: () => import('@/views/AICreation.vue'),
+      component: () => import('@renderer/views/AICreation.vue'),
       meta: { title: 'AI创作' }
     },
     {
       path: '/html-creation',
-      component: () => import('@/views/HTMLCreation.vue'),
+      component: () => import('@renderer/views/HTMLCreation.vue'),
       meta: { title: '图文生成' }
     },
     {
       path: '/add',
-      component: () => import('@/views/AddView.vue'),
+      component: () => import('@renderer/views/AddView.vue'),
       meta: { title: '添加' }
     },
     {
