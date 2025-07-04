@@ -21,7 +21,7 @@ export const useHotspotStore = defineStore('hotspots', {
       return state.hotspots.filter((h) => h.source === 'baidu').slice(0, 8)
     },
     weiboHotspots: (state): HotspotItem[] => {
-      return state.hotspots.filter((h) => h.source === 'weibo').slice(0, 5)
+      return state.hotspots.filter((h) => h.source === 'weibo').slice(0, 8)
     },
     groupedHotspots: (state): Record<string, HotspotItem[]> => {
       if (!state.hotspots) return {}

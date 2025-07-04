@@ -27,8 +27,20 @@
       <!-- 右侧表单区 -->
       <div class="form-section">
         <div class="form-content">
+          <div class="mode-toggle">
+            <button :class="{ active: creationMode === 'custom' }" @click="creationMode = 'custom'">
+              自定义主题
+            </button>
+            <button
+              :class="{ active: creationMode === 'hotspot' }"
+              @click="creationMode = 'hotspot'"
+            >
+              今日热点
+            </button>
+          </div>
+
           <form @submit.prevent="handleGenerateHtml">
-            <div class="form-group">
+            <div v-if="creationMode === 'custom'" class="form-group">
               <label for="theme">主题</label>
               <input
                 id="theme"
@@ -38,6 +50,25 @@
                 placeholder="输入主题"
               />
             </div>
+            <div v-else class="form-group">
+              <label>热点分析 (将作为主题)</label>
+              <button
+                type="button"
+                @click="handleAnalyzeHotspots"
+                :disabled="isAnalyzingHotspots"
+                class="secondary-btn"
+              >
+                {{ isAnalyzingHotspots ? '分析中...' : '分析今日热点' }}
+              </button>
+              <textarea
+                v-if="hotspotAnalysisResult"
+                v-model="hotspotAnalysisResult"
+                rows="5"
+                readonly
+                class="form-textarea mt-2"
+              ></textarea>
+            </div>
+
             <div class="form-group">
               <label for="style">风格</label>
               <select id="style" v-model="formData.style" required class="form-select">
@@ -82,7 +113,11 @@
                 style="width: 100px"
               />
             </div>
-            <button type="submit" class="generate-btn" :disabled="isGenerating">
+            <button
+              type="submit"
+              class="generate-btn"
+              :disabled="isGenerating || (creationMode === 'hotspot' && !hotspotAnalysisResult)"
+            >
               <template v-if="isGenerating">生成中...</template>
               <template v-else>生成HTML</template>
             </button>
@@ -179,6 +214,7 @@ import {
   type SectionHTMLRequestParams
 } from '../api/htmlGenerate'
 import { htmlToImage, type HtmlToImageParams } from '../api/htmlToImage'
+import { analyzeHotspots } from '../api/hotspot'
 import type { FormData } from '../store/htmlStore'
 
 // 表单数据
@@ -190,6 +226,24 @@ const formData = ref<FormData>({
   customStyle: '',
   customAudience: ''
 })
+
+const creationMode = ref('custom') // 'custom' or 'hotspot'
+const isAnalyzingHotspots = ref(false)
+const hotspotAnalysisResult = ref('')
+
+const handleAnalyzeHotspots = async (): Promise<void> => {
+  isAnalyzingHotspots.value = true
+  hotspotAnalysisResult.value = ''
+  try {
+    const response = await analyzeHotspots()
+    hotspotAnalysisResult.value = response.report
+  } catch (err) {
+    alert('热点分析失败，请稍后重试。')
+    console.error('Failed to analyze hotspots:', err)
+  } finally {
+    isAnalyzingHotspots.value = false
+  }
+}
 
 const styleOptions = ref([
   { value: 'modern', label: '现代' },
@@ -234,9 +288,10 @@ const getApiBaseUrl = (): string => {
 
 // 生成HTML
 const handleGenerateHtml = async (): Promise<void> => {
+  const theme = creationMode.value === 'custom' ? formData.value.theme : hotspotAnalysisResult.value
   // 表单验证
-  if (!formData.value.theme || !formData.value.style || !formData.value.audience) {
-    alert('请填写所有必填字段')
+  if (!theme || !formData.value.style || !formData.value.audience) {
+    alert('请确保主题、风格和受众都已提供。')
     return
   }
 
@@ -257,7 +312,7 @@ const handleGenerateHtml = async (): Promise<void> => {
   try {
     // 1. 调用生成标题接口
     const titleParams: HTMLGenerateParams = {
-      ...formData.value,
+      theme: theme,
       style,
       audience
     }
@@ -271,7 +326,7 @@ const handleGenerateHtml = async (): Promise<void> => {
 
     // 2. 调用生成CSS接口
     const cssParams: HTMLGenerateParams = {
-      ...formData.value,
+      theme: theme,
       style,
       audience
     }
@@ -286,7 +341,7 @@ const handleGenerateHtml = async (): Promise<void> => {
     // 3. 调用生成内容接口
     const contentParams: ContentRequestParams = {
       title: title,
-      theme: formData.value.theme,
+      theme: theme,
       style,
       audience
     }
@@ -862,5 +917,48 @@ onMounted(() => {
 
 .publish-btn:hover {
   background: var(--primary-color-dark, #0056b3);
+}
+
+.mode-toggle {
+  display: flex;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.mode-toggle button {
+  flex: 1;
+  padding: 0.6rem;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.mode-toggle button.active {
+  background-color: var(--primary-light);
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.secondary-btn {
+  width: 100%;
+  padding: 0.6rem 1.2rem;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.secondary-btn:hover {
+  border-color: var(--primary-color);
+}
+
+.form-textarea.mt-2 {
+  margin-top: 1rem;
 }
 </style>

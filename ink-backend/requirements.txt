@@ -11,3 +11,5 @@ requests
 deepseek
 schedule
 Markdown
+beautifulsoup4
+readability-lxml

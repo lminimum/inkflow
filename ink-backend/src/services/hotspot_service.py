@@ -3,6 +3,8 @@ import logging
 import os
 from typing import List, Dict, Optional
 from src.services.ai_providers import AIProviderFactory
+from bs4 import BeautifulSoup
+from readability import Document
 
 class HotspotService:
     def __init__(self, config_path: str = 'config.json'):
@@ -68,6 +70,40 @@ class HotspotService:
                 return 0
         all_hotspots.sort(key=safe_score, reverse=True)
         return all_hotspots
+
+    def get_hotspot_content(self, url: str) -> str:
+        """
+        Fetches and extracts the main content from a given hotspot URL.
+        """
+        if not url or not url.startswith('http'):
+            return "无效或空的URL。"
+
+        try:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+            response = requests.get(url, headers=headers, timeout=15)
+            response.raise_for_status()
+
+            doc = Document(response.text)
+            title = doc.title()
+            
+            summary_html = doc.summary(html_partial=True)
+            
+            soup = BeautifulSoup(summary_html, 'html.parser')
+            content_text = soup.get_text('\\n', strip=True)
+
+            if not content_text:
+                return f"标题: {title}\\n\\n无法从此页面提取正文内容。可能是一个动态加载或非标准文章页面。"
+
+            return f"标题: {title}\\n\\n{content_text}"
+
+        except requests.exceptions.RequestException as e:
+            logging.error(f"获取热点内容失败 (Request Error) for URL {url}: {e}")
+            return "获取内容失败：网络请求错误或超时。"
+        except Exception as e:
+            logging.error(f"解析热点内容失败 for URL {url}: {e}")
+            return "获取内容失败：页面解析时发生未知错误。"
 
     def analyze_hotspots(self, hotspots: List[Dict], ai_service: Optional[str] = None, ai_model: Optional[str] = None) -> str:
         if not hotspots:

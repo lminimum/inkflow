@@ -132,6 +132,9 @@ class HotspotAnalyzeRequest(BaseModel):
     ai_service: Optional[str] = None
     ai_model: Optional[str] = None
 
+class HotspotContentRequest(BaseModel):
+    url: str
+
 @app.get("/")
 async def read_root():
     return {"message": "AI Content Creation Backend is running!"}
@@ -374,6 +377,17 @@ async def analyze_hotspots(request: HotspotAnalyzeRequest):
     except Exception as e:
         logger.error(f"热点分析失败: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"热点分析失败: {str(e)}")
+
+@app.post("/api/hotspots/content")
+async def get_hotspot_content(request: HotspotContentRequest):
+    """获取指定URL的热点内容"""
+    try:
+        service = HotspotService()
+        content = service.get_hotspot_content(request.url)
+        return {"content": content}
+    except Exception as e:
+        logger.error(f"获取热点内容失败: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"获取热点内容失败: {str(e)}")
 
 @app.get("/api/images/{image_name}")
 async def get_image(image_name: str):
