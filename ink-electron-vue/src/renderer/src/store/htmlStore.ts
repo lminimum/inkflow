@@ -29,6 +29,15 @@ export const useHtmlStore = defineStore('html', {
     } as FormData,
     sectionDescriptions: [] as string[]
   }),
+  getters: {
+    /**
+     * 检查是否已经生成了内容
+     * @returns 如果有HTML片段和描述则返回true
+     */
+    hasGeneratedContent: (state) => {
+      return state.htmlSections.length > 0 && state.sectionDescriptions.length > 0
+    }
+  },
   actions: {
     /**
      * 追加一个HTML片段到数组

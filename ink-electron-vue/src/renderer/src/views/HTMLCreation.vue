@@ -51,22 +51,15 @@
               />
             </div>
             <div v-else class="form-group">
-              <label>热点分析 (将作为主题)</label>
+              <label>热点分析</label>
               <button
                 type="button"
-                @click="handleAnalyzeHotspots"
-                :disabled="isAnalyzingHotspots"
                 class="secondary-btn"
+                :disabled="isAnalyzingHotspots"
+                @click="handleAnalyzeHotspots"
               >
                 {{ isAnalyzingHotspots ? '分析中...' : '分析今日热点' }}
               </button>
-              <textarea
-                v-if="hotspotAnalysisResult"
-                v-model="hotspotAnalysisResult"
-                rows="5"
-                readonly
-                class="form-textarea mt-2"
-              ></textarea>
             </div>
 
             <div class="form-group">
@@ -167,52 +160,69 @@
         <div v-else-if="!isLoadingPreview && !previewError" class="no-images">暂无预览图片</div>
       </div>
 
-      <!-- 右侧编辑区 -->
+      <!-- 右侧编辑区 - 美化版 -->
       <div class="edit-section-right">
-        <h2 class="preview-title">编辑信息</h2>
-        <div class="form-group">
-          <label for="preview-theme">主题</label>
-          <input
-            id="preview-theme"
-            v-model="formData.theme"
-            type="text"
-            placeholder="输入主题"
-            class="form-input"
-          />
-        </div>
-        <div class="form-group">
-          <label for="preview-description">描述</label>
-          <textarea
-            id="preview-description"
-            v-model="editableDescription"
-            rows="10"
-            placeholder="输入描述"
-            class="form-textarea"
-          ></textarea>
-        </div>
-        <div class="form-group">
-          <label for="preview-topics">话题标签（多个标签用逗号分隔）</label>
-          <input
-            id="preview-topics"
-            v-model="topicTags"
-            type="text"
-            placeholder="例如：种草,分享,日常"
-            class="form-input"
-          />
-        </div>
-        <button
-          type="button"
-          class="publish-btn"
-          @click="handleAutoPublish"
-          :disabled="isPublishing"
-        >
-          {{ isPublishing ? '发布中...' : '自动发布到小红书' }}
-        </button>
-        <div
-          v-if="publishMessage"
-          :class="['publish-message', publishSuccess ? 'success' : 'error']"
-        >
-          {{ publishMessage }}
+        <div class="editor-card">
+          <h2 class="editor-title">编辑发布信息</h2>
+
+          <div class="form-group">
+            <label for="preview-theme"> <span class="label-icon">📝</span>标题 </label>
+            <input
+              id="preview-theme"
+              v-model="formData.theme"
+              type="text"
+              placeholder="输入吸引人的标题"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="preview-description"> <span class="label-icon">📄</span>内容描述 </label>
+            <textarea
+              id="preview-description"
+              v-model="editableDescription"
+              rows="8"
+              placeholder="输入详细的内容描述..."
+              class="form-textarea"
+            ></textarea>
+            <div class="textarea-counter">{{ editableDescription.length }}/1000 字</div>
+          </div>
+
+          <div class="form-group">
+            <label for="preview-topics"> <span class="label-icon">#️⃣</span>话题标签 </label>
+            <div class="tags-input-container">
+              <input
+                id="preview-topics"
+                v-model="topicTags"
+                type="text"
+                placeholder="用逗号分隔多个标签，如：种草,分享,日常"
+                class="form-input"
+              />
+              <div class="tags-preview" v-if="parsedTags.length > 0">
+                <span v-for="(tag, index) in parsedTags" :key="index" class="tag-pill">
+                  #{{ tag }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="publish-btn"
+            :disabled="isPublishing"
+            @click="handleAutoPublish"
+          >
+            <span class="btn-icon">🚀</span>
+            {{ isPublishing ? '发布中...' : '一键发布到小红书' }}
+          </button>
+
+          <div
+            v-if="publishMessage"
+            :class="['publish-message', publishSuccess ? 'success' : 'error']"
+          >
+            <span class="message-icon">{{ publishSuccess ? '✅' : '❌' }}</span>
+            {{ publishMessage }}
+          </div>
         </div>
       </div>
     </div>
@@ -220,7 +230,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useHtmlStore } from '../store/htmlStore'
 import HtmlSectionPager from '../components/HtmlSectionPager.vue'
@@ -310,6 +320,15 @@ const isPublishing = ref(false)
 const publishMessage = ref('')
 const publishSuccess = ref(false)
 const topicTags = ref('')
+
+// 计算属性：解析话题标签
+const parsedTags = computed(() => {
+  if (!topicTags.value) return []
+  return topicTags.value
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter((tag) => tag)
+})
 
 // 获取API基础URL
 const getApiBaseUrl = (): string => {
@@ -461,6 +480,11 @@ const handlePreviewClick = async (): Promise<void> => {
     return
   }
 
+  await generatePreview()
+}
+
+// 提取预览生成逻辑为单独函数
+const generatePreview = async (): Promise<void> => {
   isLoadingPreview.value = true
   previewError.value = ''
   previewImages.value = []
@@ -528,6 +552,13 @@ const handlePreviewClick = async (): Promise<void> => {
   }
 }
 
+// 监听showPreviewButton变化，当为true且之前已经预览过时自动预览
+watch(showPreviewButton, (newVal) => {
+  if (newVal && htmlStore.htmlSections.length > 0 && htmlStore.hasGeneratedContent) {
+    generatePreview()
+  }
+})
+
 const handleAutoPublish = async (): Promise<void> => {
   if (!formData.value.theme || !editableDescription.value || previewImages.value.length === 0) {
     alert('主题、描述和预览图片不能为空')
@@ -580,14 +611,20 @@ const handleAutoPublish = async (): Promise<void> => {
   }
 }
 
-// 页面初始化时恢复内容 (如果需要)
+// 页面初始化时恢复内容
 onMounted(() => {
-  // 检查 store 中是否已有内容，如果有则不清空
+  // 检查 store 中是否已有内容，如果有则自动预览
   if (htmlStore.htmlSections.length > 0) {
     showPreviewButton.value = true
     // 恢复表单数据
     formData.value = { ...htmlStore.formData }
-    showPreview.value = false
+
+    // 如果之前已经生成过内容，自动显示预览
+    if (htmlStore.hasGeneratedContent) {
+      setTimeout(() => {
+        generatePreview()
+      }, 500)
+    }
   } else {
     htmlStore.clearAll()
     fullGeneratedHtml.value = ''
@@ -1051,5 +1088,176 @@ onMounted(() => {
   background-color: #f2dede;
   color: #a94442;
   border: 1px solid #ebccd1;
+}
+
+/* 美化编辑区域样式 */
+.editor-card {
+  background-color: var(--bg-color);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.editor-title {
+  font-size: 1.6rem;
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  border-bottom: 2px solid var(--primary-color);
+  padding-bottom: 0.8rem;
+}
+
+.label-icon {
+  margin-right: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.edit-section-right .form-group label {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.7rem;
+}
+
+.edit-section-right .form-input,
+.edit-section-right .form-textarea {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.edit-section-right .form-input:focus,
+.edit-section-right .form-textarea:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
+  outline: none;
+}
+
+.edit-section-right .form-textarea {
+  resize: vertical;
+  min-height: 150px;
+  line-height: 1.5;
+}
+
+.textarea-counter {
+  text-align: right;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.3rem;
+}
+
+.tags-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tags-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.tag-pill {
+  display: inline-block;
+  background: var(--primary-light);
+  color: var(--primary-color);
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.publish-btn {
+  width: 100%;
+  padding: 1rem 1.2rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.btn-icon {
+  margin-right: 0.6rem;
+}
+
+.publish-btn:hover {
+  background: var(--primary-color-dark, #0056b3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.publish-btn:disabled {
+  opacity: 0.7;
+  transform: none;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.publish-message {
+  margin-top: 1.2rem;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.message-icon {
+  margin-right: 0.6rem;
+  font-size: 1.2rem;
+}
+
+.publish-message.success {
+  background-color: rgba(223, 240, 216, 0.6);
+  color: #3c763d;
+  border: 1px solid #d6e9c6;
+}
+
+.publish-message.error {
+  background-color: rgba(242, 222, 222, 0.6);
+  color: #a94442;
+  border: 1px solid #ebccd1;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .preview-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .edit-section-right {
+    margin-top: 2rem;
+  }
 }
 </style>
