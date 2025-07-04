@@ -7,6 +7,8 @@ export interface HTMLGenerateParams {
   theme: string
   style: string
   audience: string
+  model?: string // 可选的AI模型名称
+  service?: string // 可选的AI服务提供商
 }
 
 /**
@@ -31,6 +33,8 @@ export interface ContentRequestParams {
   theme: string
   style: string
   audience: string
+  model?: string // 可选的AI模型名称
+  service?: string // 可选的AI服务提供商
 }
 
 /**
@@ -61,7 +65,8 @@ export interface SectionsResponse {
 export interface SectionHTMLRequestParams {
   title: string
   description: string // 内容描述，即分割后的文本片段
-  css_style: string
+  style: string // 风格名称，用于生成对应风格的HTML
+  css_style?: string // 可选CSS样式
 }
 
 /**
@@ -207,12 +212,13 @@ export const splitContentIntoSections = async (
 
 /**
  * 调用生成单个内容区块HTML接口
- * @param params 生成参数 (title, description, css_style)
+ * @param params 生成参数 (title, description, style, css_style)
  * @returns 单个内容区块HTML响应对象
  */
 export const generateSectionHtml = async (
   params: SectionHTMLRequestParams
 ): Promise<SectionHTMLResponse> => {
+  console.log('生成区块HTML参数:', params)
   const responseData: unknown = await apiClient.post('/generate-html/section_html', params)
   // 检查返回的数据格式
   if (

@@ -4,11 +4,12 @@ from .constants import PROMPTS
 import re
 
 class HTMLBuilder(BaseGenerator):
-    async def generate_image_html(self, title: str, description: str, css_style: str) -> str:
+    async def generate_image_html(self, title: str, description: str, style: str, css_style: str = "") -> str:
         """生成HTML代码"""
         prompt = PROMPTS["image_html"].format(
             title=title,
             description=description,
+            style=style,
             css_style=css_style
         )
         html = await self.call_ai_service(prompt)

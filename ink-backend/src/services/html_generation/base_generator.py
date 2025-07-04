@@ -22,6 +22,12 @@ class BaseGenerator:
         if self.client:
             await self.client.aclose()
         self.logger.info(f"{self.__class__.__name__} resources cleaned up.")
+        
+    def set_ai_provider(self, provider, model):
+        """动态更改AI提供商和模型"""
+        self.ai_provider = provider
+        self.model = model
+        self.logger.info(f"AI提供商已更改为: {provider.__class__.__name__}, 模型: {model}")
 
     async def call_ai_service(self, prompt: str) -> str:
         """异步调用AI服务生成内容，包含重试逻辑"""

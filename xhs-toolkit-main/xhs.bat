@@ -11,7 +11,7 @@ if "%~1"=="" (
     ) else if exist "venv\Scripts\python.exe" (
         venv\Scripts\python.exe xhs_toolkit_interactive.py
     ) else (
-        python xhs_toolkit_interactive.py 2>nul || python3 xhs_toolkit_interactive.py 2>nul || py xhs_toolkit_interactive.py
+        "B:\Env\Miniconda\python.exe" xhs_toolkit_interactive.py
     )
 ) else (
     :: 有参数，执行传统命令
@@ -20,6 +20,6 @@ if "%~1"=="" (
     ) else if exist "venv\Scripts\python.exe" (
         venv\Scripts\python.exe xhs_toolkit.py %*
     ) else (
-        python xhs_toolkit.py %* 2>nul || python3 xhs_toolkit.py %* 2>nul || py xhs_toolkit.py %*
+        "B:\Env\Miniconda\python.exe" xhs_toolkit.py %* %*
     )
 )

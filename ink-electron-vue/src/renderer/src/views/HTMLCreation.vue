@@ -106,6 +106,29 @@
                 style="width: 100px"
               />
             </div>
+
+            <!-- 模型选择 -->
+            <div class="form-group">
+              <label for="model">AI模型</label>
+              <select
+                id="model"
+                v-model="selectedModel"
+                class="form-select"
+                @change="handleModelChange(selectedModel)"
+              >
+                <option value="">默认模型</option>
+                <option
+                  v-for="option in modelsStore.modelOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }} ({{ option.provider }})
+                </option>
+              </select>
+              <div v-if="modelsStore.isLoading" class="model-loading">正在加载模型列表...</div>
+              <div v-if="modelsStore.error" class="model-error">{{ modelsStore.error }}</div>
+            </div>
+
             <button
               type="submit"
               class="generate-btn"
@@ -233,6 +256,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useHtmlStore } from '../store/htmlStore'
+import { useModelsStore } from '../store/modelsStore'
 import HtmlSectionPager from '../components/HtmlSectionPager.vue'
 import ImageCarousel from '../components/ImageCarousel.vue'
 import {
@@ -261,6 +285,11 @@ const formData = ref<FormData>({
   customAudience: ''
 })
 
+// 模型选择相关
+const modelsStore = useModelsStore()
+const selectedModel = ref('')
+const selectedProvider = ref('')
+
 const creationMode = ref('custom') // 'custom' or 'hotspot'
 const isAnalyzingHotspots = ref(false)
 const hotspotAnalysisResult = ref('')
@@ -280,6 +309,12 @@ const handleAnalyzeHotspots = async (): Promise<void> => {
 }
 
 const styleOptions = ref([
+  { value: '杂志封面风', label: '杂志封面风' },
+  { value: '极简信息图风', label: '极简信息图风' },
+  { value: '可爱手绘涂鸦风', label: '可爱手绘涂鸦风' },
+  { value: '拼贴手帐风', label: '拼贴手帐风' },
+  { value: '复古胶片风', label: '复古胶片风' },
+  { value: '高饱和大字报风', label: '高饱和大字报风' },
   { value: 'modern', label: '现代' },
   { value: 'minimalist', label: '简约' },
   { value: 'retro', label: '复古' },
@@ -359,11 +394,20 @@ const handleGenerateHtml = async (): Promise<void> => {
   currentStage.value = '正在生成标题'
 
   try {
+    // 准备AI模型参数
+    const aiParams = selectedModel.value
+      ? {
+          model: selectedModel.value,
+          service: selectedProvider.value
+        }
+      : undefined
+
     // 1. 调用生成标题接口
     const titleParams: HTMLGenerateParams = {
       theme: theme,
       style,
-      audience
+      audience,
+      ...(aiParams && { model: aiParams.model, service: aiParams.service })
     }
     const titleResponse = await generateTitle(titleParams)
     if (!titleResponse || !titleResponse.title) {
@@ -377,7 +421,8 @@ const handleGenerateHtml = async (): Promise<void> => {
     const cssParams: HTMLGenerateParams = {
       theme: theme,
       style,
-      audience
+      audience,
+      ...(aiParams && { model: aiParams.model, service: aiParams.service })
     }
     const cssResponse = await generateCss(cssParams)
     if (!cssResponse || !cssResponse.css_style) {
@@ -392,7 +437,8 @@ const handleGenerateHtml = async (): Promise<void> => {
       title: title,
       theme: theme,
       style,
-      audience
+      audience,
+      ...(aiParams && { model: aiParams.model, service: aiParams.service })
     }
     const contentResponse = await generateContent(contentParams)
     if (!contentResponse || !contentResponse.content) {
@@ -430,6 +476,7 @@ const handleGenerateHtml = async (): Promise<void> => {
       const sectionHtmlParams: SectionHTMLRequestParams = {
         title: title,
         description: section,
+        style: style,
         css_style: css_style
       }
       try {
@@ -517,8 +564,7 @@ const generatePreview = async (): Promise<void> => {
       // 调用HTML转图片接口
       const params: HtmlToImageParams = {
         html_path: htmlPath,
-        width: 375,
-        height: 667
+        width: 750
       }
 
       console.log('发送HTML转图片请求，路径:', htmlPath)
@@ -611,8 +657,11 @@ const handleAutoPublish = async (): Promise<void> => {
   }
 }
 
-// 页面初始化时恢复内容
+// 页面初始化时恢复内容和加载模型
 onMounted(() => {
+  // 加载模型列表
+  modelsStore.loadModels()
+
   // 检查 store 中是否已有内容，如果有则自动预览
   if (htmlStore.htmlSections.length > 0) {
     showPreviewButton.value = true
@@ -630,6 +679,16 @@ onMounted(() => {
     fullGeneratedHtml.value = ''
   }
 })
+
+// 监听模型选择变化
+const handleModelChange = (model: string): void => {
+  selectedModel.value = model
+  // 找到对应的提供商
+  const selectedOption = modelsStore.modelOptions.find((option) => option.value === model)
+  if (selectedOption) {
+    selectedProvider.value = selectedOption.provider
+  }
+}
 </script>
 
 <style scoped>
@@ -1259,5 +1318,17 @@ onMounted(() => {
   .edit-section-right {
     margin-top: 2rem;
   }
+}
+
+.model-loading {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.model-error {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #dc3545;
 }
 </style>

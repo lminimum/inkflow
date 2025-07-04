@@ -18,6 +18,9 @@ import asyncio
 import json
 from dotenv import load_dotenv
 from src.services.html_creator import HTMLCreator
+from src.services.html_generation.title_generator import TitleGenerator
+from src.services.html_generation.css_generator import CSSGenerator
+from src.services.html_generation.content_generator import ContentGenerator
 import uuid
 from src.services.hotspot_service import HotspotService
 import concurrent.futures
@@ -98,6 +101,8 @@ class HTMLGenerateRequest(BaseModel):
     theme: str = Field(..., min_length=1, description="主题不能为空")
     style: str = Field(..., min_length=1, description="风格不能为空")
     audience: str = Field(..., min_length=1, description="受众不能为空")
+    model: Optional[str] = Field(None, description="AI模型名称，可选")
+    service: Optional[str] = Field(None, description="AI服务提供商，可选")
 
 # New request models for split and build steps
 class ContentRequest(BaseModel):
@@ -105,6 +110,8 @@ class ContentRequest(BaseModel):
     theme: str = Field(..., min_length=1, description="主题不能为空")
     style: str = Field(..., min_length=1, description="风格不能为空")
     audience: str = Field(..., min_length=1, description="受众不能为空")
+    model: Optional[str] = Field(None, description="AI模型名称，可选")
+    service: Optional[str] = Field(None, description="AI服务提供商，可选")
 
 class SectionsRequest(BaseModel):
     content: str = Field(..., min_length=1, description="内容不能为空")
@@ -119,7 +126,8 @@ class BuildRequest(BaseModel):
 class SectionHTMLRequest(BaseModel):
     title: str = Field(..., min_length=1, description="标题不能为空")
     description: str = Field(..., min_length=1, description="内容描述不能为空")
-    css_style: str = Field(..., min_length=1, description="CSS样式不能为空")
+    style: str = Field(..., min_length=1, description="风格不能为空")
+    css_style: Optional[str] = Field(None, description="CSS样式，可选")
 
 from typing import Optional
 class HtmlToImageRequest(BaseModel):
@@ -181,7 +189,18 @@ async def generate_html_title(request: HTMLGenerateRequest):
     """生成小红书笔记标题"""
     try:
         creator = HTMLCreator()
-        title_generator = creator.get_title_generator()
+        # 如果指定了模型和服务，直接使用指定的参数创建生成器
+        service_name = request.service or creator.service_name
+        model = request.model or creator.model
+        
+        title_generator = TitleGenerator(
+            config=creator.config,
+            service_name=service_name,
+            model=model,
+            max_retries=creator.max_retries,
+            retry_base_delay=creator.retry_base_delay
+        )
+            
         async with title_generator:
             title = await title_generator.generate_note_title(
                 theme=request.theme, style=request.style, audience=request.audience
@@ -196,7 +215,18 @@ async def generate_html_css(request: HTMLGenerateRequest): # Reuse HTMLGenerateR
     """生成HTML所需的CSS样式"""
     try:
         creator = HTMLCreator()
-        css_generator = creator.get_css_generator()
+        # 如果指定了模型和服务，直接使用指定的参数创建生成器
+        service_name = request.service or creator.service_name
+        model = request.model or creator.model
+        
+        css_generator = CSSGenerator(
+            config=creator.config,
+            service_name=service_name,
+            model=model,
+            max_retries=creator.max_retries,
+            retry_base_delay=creator.retry_base_delay
+        )
+            
         async with css_generator:
             css_style = await css_generator.generate_css_style(style=request.style)
         return {"css_style": css_style}
@@ -209,7 +239,18 @@ async def generate_html_content(request: ContentRequest):
     """生成小红书笔记文案内容"""
     try:
         creator = HTMLCreator()
-        content_generator = creator.get_content_generator()
+        # 如果指定了模型和服务，直接使用指定的参数创建生成器
+        service_name = request.service or creator.service_name
+        model = request.model or creator.model
+        
+        content_generator = ContentGenerator(
+            config=creator.config,
+            service_name=service_name,
+            model=model,
+            max_retries=creator.max_retries,
+            retry_base_delay=creator.retry_base_delay
+        )
+            
         async with content_generator:
             content = await content_generator.generate_note_content(
                 title=request.title,
@@ -252,7 +293,8 @@ async def generate_html_section(request: SectionHTMLRequest):
             section_html = await html_builder.generate_image_html(
                 title=request.title,
                 description=request.description,
-                css_style=request.css_style
+                style=request.style,
+                css_style=request.css_style or ""
             )
         # 保存到输出目录
         section_id = uuid.uuid4().hex
