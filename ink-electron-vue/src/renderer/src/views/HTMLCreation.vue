@@ -107,7 +107,7 @@
 
     <!-- 预览区域 -->
     <div v-if="showPreview" class="preview-section">
-      <h2 class="preview-title">图片预览</h2>
+      <h2 class="preview-title">图文预览</h2>
 
       <!-- 加载中状态 -->
       <div v-if="isLoadingPreview" class="preview-loading">正在生成预览图片...</div>
