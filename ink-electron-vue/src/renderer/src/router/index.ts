@@ -36,6 +36,12 @@ export default createRouter({
       name: 'HtmlToImageTool',
       component: () => import('@renderer/views/HtmlToImageTool.vue'),
       meta: { title: 'HTML转图片' }
+    },
+    {
+      path: '/material-library',
+      name: 'MaterialLibrary',
+      component: () => import('@renderer/views/MaterialLibrary.vue'),
+      meta: { title: '素材库' }
     }
   ]
 })

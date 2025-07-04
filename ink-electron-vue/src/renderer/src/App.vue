@@ -46,7 +46,8 @@ import {
   BuildOutlined,
   MinusOutlined,
   BorderOutlined,
-  CloseOutlined
+  CloseOutlined,
+  BookOutlined
 } from '@ant-design/icons-vue'
 import ThemeSettings from '@renderer/components/ThemeSettings.vue'
 
@@ -97,7 +98,10 @@ const homeNavItems = [
   { to: '/html-creation', icon: BuildOutlined }
 ]
 
-const toolsNavItems = [{ to: '/html-to-image', icon: BorderOutlined }]
+const toolsNavItems = [
+  { to: '/html-to-image', icon: BorderOutlined },
+  { to: '/material-library', icon: BookOutlined }
+]
 
 const settingsNavItems = [{ to: '/models', icon: DatabaseOutlined }]
 
@@ -118,7 +122,7 @@ const handleNavClick = (item: { to?: string; handler?: () => void }): void => {
     // 根据路由更新activeTab
     if (item.to === '/' || item.to === '/ai-creation' || item.to === '/html-creation') {
       activeTab.value = 'home'
-    } else if (item.to === '/html-to-image') {
+    } else if (item.to === '/html-to-image' || item.to === '/material-library') {
       activeTab.value = 'tools'
     } else if (item.to === '/models') {
       activeTab.value = 'settings'

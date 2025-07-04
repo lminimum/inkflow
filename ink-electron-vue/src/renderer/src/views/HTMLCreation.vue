@@ -105,29 +105,58 @@
       </div>
     </div>
 
-    <!-- 预览区域 -->
-    <div v-if="showPreview" class="preview-section">
-      <h2 class="preview-title">图文预览</h2>
+    <!-- 预览与编辑区域 -->
+    <div v-if="showPreview" class="preview-layout">
+      <!-- 左侧预览 -->
+      <div class="preview-section-left">
+        <h2 class="preview-title">图文预览</h2>
 
-      <!-- 加载中状态 -->
-      <div v-if="isLoadingPreview" class="preview-loading">正在生成预览图片...</div>
+        <!-- 加载中状态 -->
+        <div v-if="isLoadingPreview" class="preview-loading">正在生成预览图片...</div>
 
-      <!-- 错误信息 -->
-      <div v-if="previewError" class="preview-error">
-        {{ previewError }}
+        <!-- 错误信息 -->
+        <div v-if="previewError" class="preview-error">
+          {{ previewError }}
+        </div>
+
+        <!-- 使用轮播组件 -->
+        <div v-if="previewImages.length > 0" class="carousel-wrapper">
+          <ImageCarousel
+            :images="previewImages"
+            :title="formData.theme"
+            :description="editableDescription"
+          />
+        </div>
+
+        <!-- 无图片提示 -->
+        <div v-else-if="!isLoadingPreview && !previewError" class="no-images">暂无预览图片</div>
       </div>
 
-      <!-- 使用轮播组件 -->
-      <div v-if="previewImages.length > 0" class="carousel-wrapper">
-        <ImageCarousel
-          :images="previewImages"
-          :title="formData.theme"
-          :description="getCommonDescription()"
-        />
+      <!-- 右侧编辑区 -->
+      <div class="edit-section-right">
+        <h2 class="preview-title">编辑信息</h2>
+        <div class="form-group">
+          <label for="preview-theme">主题</label>
+          <input
+            id="preview-theme"
+            v-model="formData.theme"
+            type="text"
+            placeholder="输入主题"
+            class="form-input"
+          />
+        </div>
+        <div class="form-group">
+          <label for="preview-description">描述</label>
+          <textarea
+            id="preview-description"
+            v-model="editableDescription"
+            rows="10"
+            placeholder="输入描述"
+            class="form-textarea"
+          ></textarea>
+        </div>
+        <button type="button" class="publish-btn" @click="handleAutoPublish">自动发布</button>
       </div>
-
-      <!-- 无图片提示 -->
-      <div v-else-if="!isLoadingPreview && !previewError" class="no-images">暂无预览图片</div>
     </div>
   </div>
 </template>
@@ -196,6 +225,7 @@ const sectionDescriptions = ref<string[]>([])
 const previewImages = ref<Array<{ url: string }>>([])
 const isLoadingPreview = ref(false)
 const previewError = ref('')
+const editableDescription = ref('')
 
 // 获取API基础URL
 const getApiBaseUrl = (): string => {
@@ -350,6 +380,8 @@ const handlePreviewClick = async (): Promise<void> => {
   previewError.value = ''
   previewImages.value = []
   showPreview.value = true
+  editableDescription.value =
+    storeSectionDescriptions.value.length > 0 ? storeSectionDescriptions.value[0] : '暂无描述'
 
   try {
     // 为每个HTML部分生成图片
@@ -411,12 +443,14 @@ const handlePreviewClick = async (): Promise<void> => {
   }
 }
 
-// 获取通用描述
-const getCommonDescription = (): string => {
-  const description =
-    storeSectionDescriptions.value.length > 0 ? storeSectionDescriptions.value[0] : '暂无描述'
-
-  return description.length > 100 ? description.substring(0, 100) + '...' : description
+const handleAutoPublish = (): void => {
+  // Placeholder for publishing logic
+  alert('自动发布功能待实现')
+  console.log('Publishing with:', {
+    theme: formData.value.theme,
+    description: editableDescription.value,
+    images: previewImages.value
+  })
 }
 
 // 页面初始化时恢复内容 (如果需要)
@@ -686,10 +720,13 @@ onMounted(() => {
   transition: width 0.3s ease;
 }
 
-/* 预览区域样式 */
-.preview-section {
+/* 预览与编辑区域样式 */
+.preview-layout {
   margin-top: 2rem;
-  padding: 1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  padding-top: 1rem;
   border-top: 1px solid var(--border-color);
 }
 
@@ -697,6 +734,31 @@ onMounted(() => {
   margin-bottom: 1rem;
   font-size: 1.5rem;
   color: var(--text-primary);
+}
+
+.edit-section-right .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.edit-section-right .form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.edit-section-right .form-input,
+.edit-section-right .form-textarea {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+}
+
+.edit-section-right .form-textarea {
+  resize: vertical;
+  min-height: 150px;
 }
 
 .image-grid {
@@ -783,5 +845,22 @@ onMounted(() => {
   justify-content: center;
   margin: 2rem auto;
   max-width: 375px;
+}
+
+.publish-btn {
+  width: 100%;
+  padding: 0.6rem 1.2rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.2s;
+  margin-top: 1rem;
+}
+
+.publish-btn:hover {
+  background: var(--primary-color-dark, #0056b3);
 }
 </style>

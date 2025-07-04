@@ -50,12 +50,21 @@
       <!-- 全网热点 -->
       <div class="ranking-card">
         <div class="hot-topics-section">
-          <h2 class="section-title">全网热点</h2>
+          <h2 class="section-title">百度热点</h2>
           <div class="hot-list">
-            <div v-for="(hot, i) in hotTopics" :key="i" class="hot-item">
-              <span class="hot-rank">{{ i + 1 }}</span>
-              <span class="hot-title">{{ hot.title }}</span>
-            </div>
+            <a
+              v-for="(hot, i) in baiduHotspots"
+              :key="i"
+              :href="hot.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="hot-item-link"
+            >
+              <div class="hot-item">
+                <span class="hot-rank">{{ i + 1 }}</span>
+                <span class="hot-title">{{ hot.title }}</span>
+              </div>
+            </a>
           </div>
         </div>
       </div>
@@ -63,15 +72,26 @@
       <!-- 实时爆文 -->
       <div class="ranking-card">
         <div class="realtime-section">
-          <h2 class="section-title">实时爆文</h2>
+          <h2 class="section-title">微博热点</h2>
           <div class="realtime-list">
-            <div v-for="(article, i) in realtimeArticles" :key="i" class="realtime-item">
-              <span class="realtime-rank">{{ i + 1 }}</span>
-              <div class="realtime-content">
-                <h3 class="realtime-title">{{ article.title }}</h3>
-                <p class="realtime-views">{{ article.views }}</p>
+            <a
+              v-for="(article, i) in weiboHotspots"
+              :key="i"
+              :href="article.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="realtime-item-link"
+            >
+              <div class="realtime-item">
+                <span class="realtime-rank">{{ i + 1 }}</span>
+                <div class="realtime-content">
+                  <h3 class="realtime-title">{{ article.title }}</h3>
+                  <p class="realtime-views" v-if="article.hot_score">
+                    热度: {{ article.hot_score }}
+                  </p>
+                </div>
               </div>
-            </div>
+            </a>
           </div>
         </div>
       </div>
@@ -101,6 +121,9 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
+import { onMounted } from 'vue'
+import { useHotspotStore } from '../store/hotspotStore'
+import { storeToRefs } from 'pinia'
 const router = useRouter()
 import {
   EditOutlined,
@@ -110,17 +133,13 @@ import {
   SettingOutlined,
   QuestionCircleOutlined
 } from '@ant-design/icons-vue'
-// 热点话题数据
-// 实时爆文数据
-const realtimeArticles = [
-  { title: '国常会最新部署：释放三大政策信号', views: '235.6万观看' },
-  { title: '突发！美联储宣布加息25个基点', views: '189.3万观看' },
-  { title: '苹果新品发布会全程回顾', views: '156.7万观看' },
-  { title: '高考志愿填报十大误区', views: '128.9万观看' },
-  { title: '多地出现极端高温天气', views: '102.4万观看' }
-]
 
-// 粉丝量排行榜数据（按粉丝数降序排列）
+const hotspotStore = useHotspotStore()
+const { baiduHotspots, weiboHotspots } = storeToRefs(hotspotStore)
+
+onMounted(() => {
+  hotspotStore.fetchHotspots()
+})
 // 统计数据
 const totalWorks = '128 篇'
 const totalVisits = '3.2 万'
@@ -133,18 +152,6 @@ const authorRanking = [
   { name: '美食烹饪大师', fans: '76.5万', likes: '432.1万' },
   { name: '职场成长指南', fans: '62.8万', likes: '321.7万' },
   { name: '健康养生专家', fans: '54.2万', likes: '289.3万' }
-]
-
-// 热点话题数据
-const hotTopics = [
-  { title: '直击两会民生热点' },
-  { title: '女子校门口被撞身亡' },
-  { title: '俄国防部称将增加西部军区兵力' },
-  { title: '哈尔滨工程大学超话被封' },
-  { title: '特朗普再被起诉' },
-  { title: '微信支付重大更新' },
-  { title: '油价调价窗口今日开启' },
-  { title: '科学家发现新型超导材料' }
 ]
 </script>
 
@@ -306,6 +313,13 @@ const hotTopics = [
   overflow: hidden;
 }
 
+.hot-item-link,
+.realtime-item-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
 .hot-item {
   display: flex;
   align-items: center;
@@ -315,6 +329,10 @@ const hotTopics = [
 }
 
 .hot-item:last-child {
+  border-bottom: none;
+}
+
+.hot-item-link:last-of-type .hot-item {
   border-bottom: none;
 }
 
@@ -362,6 +380,7 @@ const hotTopics = [
   border-radius: 8px;
   box-shadow: var(--card-shadow);
   border: 1px solid var(--border-color);
+  overflow: hidden;
 }
 
 .realtime-item {
@@ -369,6 +388,15 @@ const hotTopics = [
   align-items: center;
   padding: 12px 15px;
   border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.2s;
+}
+
+.realtime-item-link:last-of-type .realtime-item {
+  border-bottom: none;
+}
+
+.realtime-item:hover {
+  background-color: var(--hover-color);
 }
 
 .realtime-item:last-child {
