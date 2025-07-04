@@ -190,7 +190,30 @@
             class="form-textarea"
           ></textarea>
         </div>
-        <button type="button" class="publish-btn" @click="handleAutoPublish">自动发布</button>
+        <div class="form-group">
+          <label for="preview-topics">话题标签（多个标签用逗号分隔）</label>
+          <input
+            id="preview-topics"
+            v-model="topicTags"
+            type="text"
+            placeholder="例如：种草,分享,日常"
+            class="form-input"
+          />
+        </div>
+        <button
+          type="button"
+          class="publish-btn"
+          @click="handleAutoPublish"
+          :disabled="isPublishing"
+        >
+          {{ isPublishing ? '发布中...' : '自动发布到小红书' }}
+        </button>
+        <div
+          v-if="publishMessage"
+          :class="['publish-message', publishSuccess ? 'success' : 'error']"
+        >
+          {{ publishMessage }}
+        </div>
       </div>
     </div>
   </div>
@@ -215,6 +238,7 @@ import {
 } from '../api/htmlGenerate'
 import { htmlToImage, type HtmlToImageParams } from '../api/htmlToImage'
 import { analyzeHotspots } from '../api/hotspot'
+import { publishToXHS } from '../api/xhsPublish'
 import type { FormData } from '../store/htmlStore'
 
 // 表单数据
@@ -280,6 +304,12 @@ const previewImages = ref<Array<{ url: string }>>([])
 const isLoadingPreview = ref(false)
 const previewError = ref('')
 const editableDescription = ref('')
+
+// 添加发布相关状态变量
+const isPublishing = ref(false)
+const publishMessage = ref('')
+const publishSuccess = ref(false)
+const topicTags = ref('')
 
 // 获取API基础URL
 const getApiBaseUrl = (): string => {
@@ -498,14 +528,56 @@ const handlePreviewClick = async (): Promise<void> => {
   }
 }
 
-const handleAutoPublish = (): void => {
-  // Placeholder for publishing logic
-  alert('自动发布功能待实现')
-  console.log('Publishing with:', {
-    theme: formData.value.theme,
-    description: editableDescription.value,
-    images: previewImages.value
-  })
+const handleAutoPublish = async (): Promise<void> => {
+  if (!formData.value.theme || !editableDescription.value || previewImages.value.length === 0) {
+    alert('主题、描述和预览图片不能为空')
+    return
+  }
+
+  try {
+    // 显示加载状态
+    isPublishing.value = true
+    publishMessage.value = ''
+    currentStage.value = '正在发布到小红书...'
+
+    // 准备要发布的图片
+    const imageUrls = previewImages.value.map((img) => img.url)
+
+    // 处理话题标签
+    const topics = topicTags.value
+      ? topicTags.value
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter((tag) => tag)
+      : []
+
+    // 调用发布接口
+    const result = await publishToXHS({
+      title: formData.value.theme,
+      content: editableDescription.value,
+      topics: topics,
+      images: imageUrls
+    })
+
+    // 处理结果
+    if (result.success) {
+      publishSuccess.value = true
+      publishMessage.value = '发布成功！笔记已提交到小红书。'
+      console.log('发布成功:', result)
+    } else {
+      publishSuccess.value = false
+      publishMessage.value = `发布失败: ${result.message}`
+      console.error('发布失败:', result)
+    }
+  } catch (error) {
+    publishSuccess.value = false
+    publishMessage.value = `发布过程出错: ${error instanceof Error ? error.message : String(error)}`
+    console.error('发布过程出错:', error)
+  } finally {
+    // 清除加载状态
+    isPublishing.value = false
+    currentStage.value = ''
+  }
 }
 
 // 页面初始化时恢复内容 (如果需要)
@@ -960,5 +1032,24 @@ onMounted(() => {
 
 .form-textarea.mt-2 {
   margin-top: 1rem;
+}
+
+.publish-message {
+  margin-top: 1rem;
+  padding: 0.8rem;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.publish-message.success {
+  background-color: #dff0d8;
+  color: #3c763d;
+  border: 1px solid #d6e9c6;
+}
+
+.publish-message.error {
+  background-color: #f2dede;
+  color: #a94442;
+  border: 1px solid #ebccd1;
 }
 </style>

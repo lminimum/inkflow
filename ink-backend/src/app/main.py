@@ -23,6 +23,8 @@ from src.services.hotspot_service import HotspotService
 import concurrent.futures
 # 导入同步截图函数
 from src.services.screenshot_sync import take_screenshot
+from typing import Optional, List
+from src.services.xhs_publisher import XHSPublisher
 
 # 加载环境变量
 load_dotenv()
@@ -134,6 +136,14 @@ class HotspotAnalyzeRequest(BaseModel):
 
 class HotspotContentRequest(BaseModel):
     url: str
+
+class XHSPublishRequest(BaseModel):
+    title: str
+    content: str
+    topics: Optional[List[str]] = None
+    location: Optional[str] = None
+    images: Optional[List[str]] = None
+    videos: Optional[List[str]] = None
 
 @app.get("/")
 async def read_root():
@@ -388,6 +398,35 @@ async def get_hotspot_content(request: HotspotContentRequest):
     except Exception as e:
         logger.error(f"获取热点内容失败: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"获取热点内容失败: {str(e)}")
+
+@app.post("/api/publish/xhs")
+async def publish_to_xiaohongshu(request: XHSPublishRequest):
+    """发布内容到小红书"""
+    try:
+        publisher = XHSPublisher()
+        result = publisher.publish_note(
+            title=request.title,
+            content=request.content,
+            topics=request.topics,
+            location=request.location,
+            images=request.images,
+            videos=request.videos
+        )
+        
+        if not result["success"]:
+            logger.error(f"发布到小红书失败: {result['message']}")
+            raise HTTPException(
+                status_code=500, 
+                detail=f"发布失败: {result['message']}"
+            )
+        
+        return result
+    except Exception as e:
+        logger.error(f"发布到小红书时出错: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500, 
+            detail=f"发布过程出错: {str(e)}"
+        )
 
 @app.get("/api/images/{image_name}")
 async def get_image(image_name: str):
