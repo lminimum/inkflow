@@ -1,6 +1,6 @@
 <template>
   <div class="cookie-manager-container">
-    <a-page-header title="多账号Cookie管理" :ghost="false">
+    <a-page-header title="多账号Cookie管理" :ghost="true">
       <template #extra>
         <a-button type="primary" @click="showAddModal">
           <PlusOutlined />
@@ -266,11 +266,14 @@ onMounted(() => {
 <style scoped>
 .cookie-manager-container {
   padding: 24px;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  height: 100%;
 }
 
 .page-description {
   margin-top: 8px;
-  color: var(--text-color-secondary);
+  color: var(--text-secondary);
 }
 
 .content-area {
@@ -278,13 +281,38 @@ onMounted(() => {
 }
 
 .account-list {
-  background-color: var(--bg-color-card);
+  background-color: var(--card-bg);
+  border-color: var(--border-color);
+  border-radius: 8px;
+}
+
+:deep(.ant-list-header) {
+  color: var(--text-primary);
+}
+
+:deep(.ant-page-header-heading-title) {
+  color: var(--text-primary) !important;
+}
+
+:deep(.ant-btn-circle) {
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
+:deep(.ant-btn-circle:not(.ant-btn-dangerous):hover) {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+:deep(.ant-switch-checked) {
+  background-color: var(--primary-color) !important;
 }
 
 .account-title {
   display: flex;
   align-items: center;
   gap: 8px;
+  color: var(--text-primary);
 }
 
 .account-name {
@@ -299,7 +327,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 16px;
-  color: var(--text-color-secondary);
+  color: var(--text-secondary);
   font-size: 12px;
 }
 
@@ -318,6 +346,6 @@ onMounted(() => {
 }
 
 .status-unknown {
-  color: var(--text-color-secondary);
+  color: var(--text-secondary);
 }
 </style>

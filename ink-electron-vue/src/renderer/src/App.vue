@@ -1,37 +1,39 @@
 <template>
-  <div style="background-color: var(--card-bg)">
-    <div v-if="isElectron" class="custom-titlebar">
-      <div class="window-title"></div>
-      <div class="window-controls-fixed">
-        <MinusOutlined class="window-btn" @click="minimize" />
-        <BorderOutlined class="window-btn" style="font-size: 14px" @click="maximize" />
-        <CloseOutlined class="window-btn" @click="close" />
-      </div>
-    </div>
-    <div class="layout-container">
-      <SidebarMenu
-        :is-dark="isDark"
-        :top-items="topNavItems"
-        :on-setting-click="showThemeSettings"
-        @item-click="handleNavClick"
-      />
-      <div class="main-container">
-        <!-- 全局Tab组件 -->
-        <GlobalTabs :tabs="tabs" :model-value="activeTab" @update:model-value="switchTab" />
-        <div class="main-content">
-          <div class="header">
-            <span style="font-size: larger">
-              {{ route.meta.title }}
-            </span>
-          </div>
-          <div class="content-container">
-            <router-view />
-          </div>
+  <a-config-provider :theme="appTheme">
+    <div style="background-color: var(--card-bg)">
+      <div v-if="isElectron" class="custom-titlebar">
+        <div class="window-title"></div>
+        <div class="window-controls-fixed">
+          <MinusOutlined class="window-btn" @click="minimize" />
+          <BorderOutlined class="window-btn" style="font-size: 14px" @click="maximize" />
+          <CloseOutlined class="window-btn" @click="close" />
         </div>
       </div>
-      <ThemeSettings :open="themeSettingsOpen" @close="handleThemeSettingsClose" />
+      <div class="layout-container">
+        <SidebarMenu
+          :is-dark="isDark"
+          :top-items="topNavItems"
+          :on-setting-click="showThemeSettings"
+          @item-click="handleNavClick"
+        />
+        <div class="main-container">
+          <!-- 全局Tab组件 -->
+          <GlobalTabs :tabs="tabs" :model-value="activeTab" @update:model-value="switchTab" />
+          <div class="main-content">
+            <div class="header">
+              <span style="font-size: larger">
+                {{ route.meta.title }}
+              </span>
+            </div>
+            <div class="content-container">
+              <router-view />
+            </div>
+          </div>
+        </div>
+        <ThemeSettings :open="themeSettingsOpen" @close="handleThemeSettingsClose" />
+      </div>
     </div>
-  </div>
+  </a-config-provider>
 </template>
 
 <script lang="ts" setup>
@@ -66,6 +68,18 @@ const isDark = ref(false)
 const showThemeSettings = (): void => {
   themeSettingsOpen.value = true
 }
+
+// 动态主题配置
+const appTheme = computed(() => {
+  const primaryColor = getComputedStyle(document.documentElement)
+    .getPropertyValue('--primary-color')
+    .trim()
+  return {
+    token: {
+      colorPrimary: primaryColor || '#1677ff'
+    }
+  }
+})
 
 // 自定义窗口控制
 const minimize = (): void => window.electronAPI?.minimize()
