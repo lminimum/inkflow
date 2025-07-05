@@ -128,6 +128,7 @@ class SectionHTMLRequest(BaseModel):
     description: str = Field(..., min_length=1, description="内容描述不能为空")
     style: str = Field(..., min_length=1, description="风格不能为空")
     css_style: Optional[str] = Field(None, description="CSS样式，可选")
+    is_question: bool = Field(False, description="是否为问题模式")
 
 from typing import Optional
 class HtmlToImageRequest(BaseModel):
@@ -290,12 +291,21 @@ async def generate_html_section(request: SectionHTMLRequest):
         creator = HTMLCreator()
         html_builder = creator.get_html_builder()
         async with html_builder:
-            section_html = await html_builder.generate_image_html(
-                title=request.title,
-                description=request.description,
-                style=request.style,
-                css_style=request.css_style or ""
-            )
+            # 根据是否为问题模式选择不同的生成方法
+            if request.is_question:
+                section_html = await html_builder.generate_question_html(
+                    title=request.title,
+                    question=request.description,
+                    style=request.style,
+                    css_style=request.css_style or ""
+                )
+            else:
+                section_html = await html_builder.generate_image_html(
+                    title=request.title,
+                    description=request.description,
+                    style=request.style,
+                    css_style=request.css_style or ""
+                )
         # 保存到输出目录
         section_id = uuid.uuid4().hex
         html_filename = f'section_{section_id}.html'

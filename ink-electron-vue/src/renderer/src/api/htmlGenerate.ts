@@ -67,6 +67,7 @@ export interface SectionHTMLRequestParams {
   description: string // 内容描述，即分割后的文本片段
   style: string // 风格名称，用于生成对应风格的HTML
   css_style?: string // 可选CSS样式
+  is_question?: boolean // 是否为问题模式
 }
 
 /**

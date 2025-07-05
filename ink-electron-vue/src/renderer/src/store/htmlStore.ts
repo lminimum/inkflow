@@ -14,6 +14,7 @@ export interface FormData {
   numSections: number
   customStyle: string
   customAudience: string
+  isQuestion: boolean
 }
 
 export const useHtmlStore = defineStore('html', {
@@ -25,7 +26,8 @@ export const useHtmlStore = defineStore('html', {
       audience: '',
       numSections: 1,
       customStyle: '',
-      customAudience: ''
+      customAudience: '',
+      isQuestion: false
     } as FormData,
     sectionDescriptions: [] as string[]
   }),
@@ -79,7 +81,8 @@ export const useHtmlStore = defineStore('html', {
         audience: '',
         numSections: 1,
         customStyle: '',
-        customAudience: ''
+        customAudience: '',
+        isQuestion: false
       }
     }
   }

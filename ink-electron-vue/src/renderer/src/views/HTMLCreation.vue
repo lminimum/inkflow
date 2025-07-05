@@ -10,13 +10,16 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 420px;
+            height: auto;
+            min-height: 420px;
             max-width: 700px;
             margin: 0 auto;
             background: var(--bg-color);
             border-radius: 8px;
             box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.04);
-            overflow: hidden;
+            overflow: visible;
+            position: relative;
+            padding: 1rem 3rem;
           "
         >
           <!-- 限定内容区域大小，内容自适应缩放 -->
@@ -60,6 +63,20 @@
               >
                 {{ isAnalyzingHotspots ? '分析中...' : '分析今日热点' }}
               </button>
+            </div>
+
+            <!-- 问题模式切换 -->
+            <div class="form-group question-mode-toggle">
+              <div class="question-mode-row">
+                <label for="question-mode">问题模式</label>
+                <div
+                  class="toggle-container"
+                  title="问题模式将直接使用主题作为问题内容生成图片，不添加额外内容"
+                >
+                  <input type="checkbox" id="question-mode" v-model="formData.isQuestion" />
+                  <span class="tooltip-icon">ⓘ</span>
+                </div>
+              </div>
             </div>
 
             <div class="form-group">
@@ -171,7 +188,7 @@
         </div>
 
         <!-- 使用轮播组件 -->
-        <div v-if="previewImages.length > 0" class="carousel-wrapper">
+        <div v-if="previewImages.length > 0" class="carousel-container">
           <ImageCarousel
             :images="previewImages"
             :title="formData.theme"
@@ -282,7 +299,8 @@ const formData = ref<FormData>({
   audience: '',
   numSections: 1,
   customStyle: '',
-  customAudience: ''
+  customAudience: '',
+  isQuestion: false
 })
 
 // 模型选择相关
@@ -391,7 +409,6 @@ const handleGenerateHtml = async (): Promise<void> => {
   fullGeneratedHtml.value = ''
   sectionDescriptions.value = []
   generationProgress.value = 0
-  currentStage.value = '正在生成标题'
 
   try {
     // 准备AI模型参数
@@ -402,20 +419,31 @@ const handleGenerateHtml = async (): Promise<void> => {
         }
       : undefined
 
-    // 1. 调用生成标题接口
-    const titleParams: HTMLGenerateParams = {
-      theme: theme,
-      style,
-      audience,
-      ...(aiParams && { model: aiParams.model, service: aiParams.service })
+    let title = ''
+
+    // 如果是问题模式，直接使用主题作为标题
+    if (formData.value.isQuestion) {
+      title = theme
+      generationProgress.value = 20
+      currentStage.value = '正在生成CSS'
+    } else {
+      // 非问题模式，调用生成标题接口
+      currentStage.value = '正在生成标题'
+      // 1. 调用生成标题接口
+      const titleParams: HTMLGenerateParams = {
+        theme: theme,
+        style,
+        audience,
+        ...(aiParams && { model: aiParams.model, service: aiParams.service })
+      }
+      const titleResponse = await generateTitle(titleParams)
+      if (!titleResponse || !titleResponse.title) {
+        throw new Error('从后端获取标题失败或标题为空。')
+      }
+      title = titleResponse.title
+      generationProgress.value = 20
+      currentStage.value = '正在生成CSS'
     }
-    const titleResponse = await generateTitle(titleParams)
-    if (!titleResponse || !titleResponse.title) {
-      throw new Error('从后端获取标题失败或标题为空。')
-    }
-    const title = titleResponse.title
-    generationProgress.value = 20
-    currentStage.value = '正在生成CSS'
 
     // 2. 调用生成CSS接口
     const cssParams: HTMLGenerateParams = {
@@ -430,23 +458,33 @@ const handleGenerateHtml = async (): Promise<void> => {
     }
     const css_style = cssResponse.css_style
     generationProgress.value = 40
-    currentStage.value = '正在生成内容'
 
-    // 3. 调用生成内容接口
-    const contentParams: ContentRequestParams = {
-      title: title,
-      theme: theme,
-      style,
-      audience,
-      ...(aiParams && { model: aiParams.model, service: aiParams.service })
+    let content = ''
+
+    if (formData.value.isQuestion) {
+      // 问题模式下，直接使用主题作为内容
+      content = theme
+      generationProgress.value = 60
+      currentStage.value = '正在分割内容'
+    } else {
+      // 非问题模式，调用生成内容接口
+      currentStage.value = '正在生成内容'
+      // 3. 调用生成内容接口
+      const contentParams: ContentRequestParams = {
+        title: title,
+        theme: theme,
+        style,
+        audience,
+        ...(aiParams && { model: aiParams.model, service: aiParams.service })
+      }
+      const contentResponse = await generateContent(contentParams)
+      if (!contentResponse || !contentResponse.content) {
+        throw new Error('从后端获取内容失败或内容为空。')
+      }
+      content = contentResponse.content
+      generationProgress.value = 60
+      currentStage.value = '正在分割内容'
     }
-    const contentResponse = await generateContent(contentParams)
-    if (!contentResponse || !contentResponse.content) {
-      throw new Error('从后端获取内容失败或内容为空。')
-    }
-    const content = contentResponse.content
-    generationProgress.value = 60
-    currentStage.value = '正在分割内容'
 
     // 4. 调用内容分割接口
     const sectionsParams: SectionsRequestParams = {
@@ -477,7 +515,8 @@ const handleGenerateHtml = async (): Promise<void> => {
         title: title,
         description: section,
         style: style,
-        css_style: css_style
+        css_style: css_style,
+        is_question: formData.value.isQuestion
       }
       try {
         const sectionHtmlResponse = await generateSectionHtml(sectionHtmlParams)
@@ -701,6 +740,7 @@ const handleModelChange = (model: string): void => {
   flex-direction: column;
   background-color: var(--bg-color);
   color: var(--text-primary);
+  overflow-y: auto;
 }
 
 .top-nav {
@@ -730,16 +770,23 @@ const handleModelChange = (model: string): void => {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 2rem;
-  flex: 1;
-  overflow: hidden;
+  height: auto;
+  min-height: 500px;
+  max-height: calc(100vh - 150px);
+  overflow: visible;
+  flex: 0 0 auto;
+  margin-bottom: 1rem;
 }
 
 .display-section {
   display: flex;
   flex-direction: column;
   border-radius: 8px;
-  overflow: hidden;
+  overflow-y: auto;
   background-color: var(--bg-color);
+  height: auto;
+  min-height: 450px;
+  max-height: calc(100vh - 150px);
 }
 
 .display-header {
@@ -775,14 +822,20 @@ const handleModelChange = (model: string): void => {
   overflow: visible;
   background: var(--bg-color);
   color: var(--text-primary);
-  min-height: 300px;
-  white-space: nowrap;
+  min-height: 420px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .form-section {
   border-left: 1px solid var(--border-color);
   overflow: hidden;
   background-color: var(--bg-color);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 150px);
 }
 
 .form-header {
@@ -792,6 +845,8 @@ const handleModelChange = (model: string): void => {
 
 .form-content {
   padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .form-group {
@@ -917,10 +972,11 @@ const handleModelChange = (model: string): void => {
   background: var(--bg-color);
   border: 1px solid var(--border-color);
   border-radius: 6px;
-  margin: 1.5rem;
+  margin: 0 1.5rem 1.5rem 1.5rem;
   padding: 1rem;
   font-size: 0.95rem;
   color: var(--text-primary);
+  flex-shrink: 0;
 }
 
 .progress-stage {
@@ -945,18 +1001,33 @@ const handleModelChange = (model: string): void => {
 
 /* 预览与编辑区域样式 */
 .preview-layout {
-  margin-top: 2rem;
+  margin-top: 1rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 2rem;
   padding-top: 1rem;
   border-top: 1px solid var(--border-color);
+  height: auto;
+  overflow: visible;
+}
+
+.preview-section-left {
+  height: auto;
+  overflow: visible;
+  padding-right: 10px;
+}
+
+.edit-section-right {
+  height: auto;
+  overflow: visible;
+  padding-right: 10px;
 }
 
 .preview-title {
   margin-bottom: 1rem;
   font-size: 1.5rem;
   color: var(--text-primary);
+  padding-top: 0.5rem;
 }
 
 .edit-section-right .form-group {
@@ -1063,11 +1134,13 @@ const handleModelChange = (model: string): void => {
   margin-top: 1rem;
 }
 
-.carousel-wrapper {
+.carousel-container {
   display: flex;
   justify-content: center;
-  margin: 2rem auto;
+  margin: 1rem auto;
   max-width: 375px;
+  height: auto;
+  overflow: visible;
 }
 
 .publish-btn {
@@ -1202,7 +1275,6 @@ const handleModelChange = (model: string): void => {
 .edit-section-right .form-textarea {
   resize: vertical;
   min-height: 150px;
-  line-height: 1.5;
 }
 
 .textarea-counter {
@@ -1330,5 +1402,78 @@ const handleModelChange = (model: string): void => {
   margin-top: 0.5rem;
   font-size: 0.9rem;
   color: #dc3545;
+}
+
+.question-mode-toggle {
+  margin-bottom: 1.5rem;
+  padding: 0.5rem 0;
+}
+
+.question-mode-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.question-mode-row label {
+  font-weight: 500;
+  margin-bottom: 0;
+}
+
+.toggle-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  gap: 0.5rem;
+  padding: 4px 0;
+}
+
+.toggle-container input[type='checkbox'] {
+  margin: 0;
+  vertical-align: middle;
+  position: relative;
+  top: -1px;
+}
+
+.toggle-text {
+  font-weight: 500;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.tooltip-icon {
+  margin-left: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  cursor: help;
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  top: 0;
+}
+
+.toggle-container:hover:after {
+  content: attr(title);
+  position: absolute;
+  left: 0;
+  top: 100%;
+  z-index: 100;
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 5px 10px;
+  width: 250px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 </style>

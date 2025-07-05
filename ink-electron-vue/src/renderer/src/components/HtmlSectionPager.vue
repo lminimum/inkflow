@@ -75,24 +75,43 @@ const setIframeHeight = (): void => {
       const iframe = iframeRef.value
       const doc = iframe.contentDocument || iframe.contentWindow?.document
       if (doc) {
-        const rawHeight = doc.body.scrollHeight
-        iframe.style.height = rawHeight + 'px'
-        scalerRef.value.style.height = rawHeight + 'px'
-        containerRef.value.style.height = rawHeight * scale + 'px'
+        // 获取实际内容高度
+        const rawHeight = Math.max(
+          doc.body.scrollHeight,
+          doc.documentElement.scrollHeight,
+          doc.body.offsetHeight,
+          doc.documentElement.offsetHeight
+        )
+
+        // 添加额外的空间以确保内容完全显示
+        const adjustedHeight = rawHeight + 20
+
+        // 设置iframe高度
+        iframe.style.height = adjustedHeight + 'px'
+
+        // 设置缩放容器高度
+        scalerRef.value.style.height = adjustedHeight + 'px'
+
+        // 设置外层容器高度，考虑缩放比例
+        containerRef.value.style.height = adjustedHeight * scale + 'px'
       }
     } catch (e) {
-      // 跨域等异常忽略
+      console.error('设置iframe高度时出错:', e)
     }
   }
 }
 
 watch([currentSection, () => props.sections], async () => {
   await nextTick()
-  setTimeout(setIframeHeight, 100) // 等待渲染
+  // 多次尝试设置高度，确保内容完全加载
+  setTimeout(setIframeHeight, 100)
+  setTimeout(setIframeHeight, 300)
+  setTimeout(setIframeHeight, 500)
 })
 
 onMounted(() => {
   setTimeout(setIframeHeight, 200)
+  setTimeout(setIframeHeight, 500)
 })
 </script>
 
@@ -107,26 +126,46 @@ export default {}
   align-items: center;
   justify-content: center;
   gap: 1.5rem;
-  width: 100vw;
+  width: 100%;
   max-width: 100%;
   min-height: 300px;
   box-sizing: border-box;
-  padding: 2rem 0;
+  padding: 1rem 0;
   background: var(--bg-color);
-  overflow-x: auto;
+  position: relative;
 }
+
 .pager-btn {
   font-size: 2rem;
   background: none;
   border: none;
   cursor: pointer;
   color: var(--primary-color, #333);
-  padding: 0 1rem;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
 }
+
+.pager-btn:first-child {
+  left: -45px;
+}
+
+.pager-btn:last-child {
+  right: -45px;
+}
+
 .pager-btn:disabled {
   color: #ccc;
   cursor: not-allowed;
 }
+
 .pager-content {
   flex: 1 1 auto;
   display: flex;
@@ -137,7 +176,44 @@ export default {}
   height: 100%;
   min-height: 0;
   box-sizing: border-box;
+  position: relative;
 }
+
+.iframe-container {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  height: auto;
+  width: 100%;
+  overflow: visible;
+  display: block;
+  margin: 0 auto;
+}
+
+.iframe-scaler {
+  width: 450px;
+  /* 450/700 ≈ 0.643 */
+  transform: scale(0.643);
+  transform-origin: top center;
+  margin: 0 auto;
+  overflow: visible;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.html-iframe {
+  width: 700px;
+  min-height: 200px;
+  border: none;
+  display: block;
+  overflow: hidden;
+  height: auto;
+  background-color: white;
+}
+
 .html-section-item {
   min-width: 320px;
   max-width: 100%;
@@ -155,11 +231,13 @@ export default {}
   align-items: center;
   box-sizing: border-box;
 }
+
 .pager-indicator {
   text-align: center;
   color: #888;
   font-size: 1rem;
 }
+
 .empty-hint {
   color: var(--text-secondary);
   text-align: center;
@@ -167,37 +245,5 @@ export default {}
   margin-right: 3rem;
   margin-top: 2rem;
   font-style: italic;
-}
-.iframe-container {
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  padding: 0;
-  height: auto;
-  width: auto;
-  overflow: visible;
-  display: block;
-}
-
-.iframe-scaler {
-  width: 450px;
-  /* 450/700 ≈ 0.643 */
-  transform: scale(0.643);
-  transform-origin: top left;
-  margin: 0 auto;
-  overflow: visible;
-  height: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.html-iframe {
-  width: 700px;
-  min-height: 0;
-  border: none;
-  display: block;
-  overflow: hidden;
-  height: auto;
 }
 </style>

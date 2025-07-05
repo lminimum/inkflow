@@ -19,6 +19,21 @@ class HTMLBuilder(BaseGenerator):
         html = re.sub(r'```\s*$', '', html, flags=re.IGNORECASE)
         return html.strip()
 
+    async def generate_question_html(self, title: str, question: str, style: str, css_style: str = "") -> str:
+        """生成问题类型的HTML代码"""
+        prompt = PROMPTS["question_html"].format(
+            title=title,
+            description=question,
+            style=style,
+            css_style=css_style
+        )
+        html = await self.call_ai_service(prompt)
+        # 去除开头和结尾的 markdown 代码块标记
+        html = re.sub(r'^```html\s*', '', html, flags=re.IGNORECASE)
+        html = re.sub(r'^```\s*', '', html, flags=re.IGNORECASE)
+        html = re.sub(r'```\s*$', '', html, flags=re.IGNORECASE)
+        return html.strip()
+
     async def generate_section_html(self, content, section_num):
         """生成单个内容区块的HTML"""
         return f'<section class="content-section section-{section_num}">{content}</section>'
