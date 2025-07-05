@@ -157,17 +157,44 @@ const handleAddAccount = async (): Promise<void> => {
     return
   }
   isAdding.value = true
+  const targetAccountName = newAccountName.value
   try {
-    const res = await addCookieAccount(newAccountName.value)
+    const res = await addCookieAccount(targetAccountName)
     if (res.success) {
-      message.loading('已启动后台任务，请在弹出的浏览器中登录...', 0)
       isModalVisible.value = false
       newAccountName.value = ''
-      setTimeout(() => {
-        message.destroy()
-        message.success('登录任务已启动，完成后请刷新列表查看新账号。', 5)
-        fetchAccounts()
-      }, 5000)
+      message.loading('已启动后台任务，请在弹出的浏览器中完成登录... [0s]', 0)
+
+      // 使用轮询来检查新账号是否已添加
+      const pollInterval = 3000 // 每3秒检查一次
+      const pollTimeout = 300000 // 5分钟超时
+      let elapsedTime = 0
+
+      const intervalId = setInterval(async () => {
+        elapsedTime += pollInterval
+        message.loading(
+          `已启动后台任务，请在弹出的浏览器中完成登录... [${Math.round(elapsedTime / 1000)}s]`,
+          0
+        )
+
+        const listRes = await getCookieAccounts()
+        if (listRes.success && listRes.accounts) {
+          const found = listRes.accounts.find((acc) => acc.name === targetAccountName)
+          if (found) {
+            clearInterval(intervalId)
+            message.destroy()
+            message.success(`账号 ${targetAccountName} 已成功添加！`)
+            accounts.value = listRes.accounts.map((acc) => ({ ...acc, is_valid: null }))
+            return
+          }
+        }
+
+        if (elapsedTime >= pollTimeout) {
+          clearInterval(intervalId)
+          message.destroy()
+          message.warning('添加账号超时，请刷新列表查看或重试。')
+        }
+      }, pollInterval)
     } else {
       message.error(res.message || '启动添加任务失败')
     }

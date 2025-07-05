@@ -9,6 +9,7 @@ import time
 from pathlib import Path
 from datetime import datetime
 from typing import List, Dict, Any, Optional
+from selenium.webdriver.common.by import By
 
 from ..core.config import XHSConfig
 from ..core.browser import ChromeDriverManager
@@ -226,7 +227,6 @@ class CookieManager:
             是否检测到登录完成
         """
         import time
-        from selenium.webdriver.common.by import By
         from selenium.webdriver.support.ui import WebDriverWait
         from selenium.webdriver.support import expected_conditions as EC
         
@@ -586,7 +586,7 @@ class CookieManager:
         except PermissionError as e:
             logger.error(f"❌ 权限错误，无法写入cookies文件: {e}")
             return False
-        except json.JSONEncodeError as e:
+        except TypeError as e:
             logger.error(f"❌ JSON编码错误: {e}")
             return False
         except Exception as e:

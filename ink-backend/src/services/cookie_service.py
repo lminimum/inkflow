@@ -28,9 +28,36 @@ class CookieService:
         # 在数据目录中为不同账号创建独立的存储空间
         self.accounts_dir = data_dir / "accounts"
         self.accounts_dir.mkdir(parents=True, exist_ok=True)
+
+        # 自动迁移旧的cookie文件
+        self._migrate_default_cookie()
+
         # 用于记录当前活动账号的文件
         self.active_account_file = self.accounts_dir / ".active_account"
         logger.info(f"多账号Cookie服务初始化，账号目录: {self.accounts_dir}")
+
+    def _migrate_default_cookie(self):
+        """如果存在一个默认的、未被管理的cookie，则将其导入到账号系统"""
+        default_path = self.get_default_cookie_path()
+        imported_name = "default_imported"
+        imported_path = self._get_account_cookie_path(imported_name)
+
+        # 如果默认cookie存在，且我们还未导入过它
+        if default_path.exists() and not imported_path.exists():
+            try:
+                # 再次检查，确保它不是一个已被激活的文件的副本
+                active_account = self.get_active_account()
+                if active_account:
+                    active_path = self._get_account_cookie_path(active_account)
+                    if active_path.exists() and default_path.stat().st_mtime == active_path.stat().st_mtime:
+                        logger.info("默认cookie是当前活动账号的副本，跳过导入。")
+                        return
+
+                logger.info(f"检测到默认cookie文件，将作为 '{imported_name}' 导入...")
+                shutil.copy2(default_path, imported_path)
+                logger.info(f"'{imported_name}' 导入成功。现在可以在账号列表中看到它。")
+            except Exception as e:
+                logger.error(f"导入默认cookie时出错: {e}")
 
     def _get_account_cookie_path(self, account_name: str) -> Path:
         """根据账户名获取安全的cookie文件路径"""
