@@ -76,7 +76,7 @@ const close = (): void => window.electronAPI?.close()
 const tabs = [
   { label: '主页', key: 'home', route: '/' },
   { label: '工具', key: 'tools', route: '/html-to-image' },
-  { label: '设置', key: 'settings', route: '/models' }
+  { label: '设置', key: 'settings', route: '/cookies' }
 ]
 
 // Tab状态管理
@@ -88,7 +88,7 @@ const switchTab = (tab: string): void => {
   } else if (tab === 'tools') {
     router.push('/html-to-image')
   } else if (tab === 'settings') {
-    router.push('/models')
+    router.push('/cookies')
   }
 }
 
@@ -105,8 +105,8 @@ const toolsNavItems = [
 ]
 
 const settingsNavItems = [
-  { to: '/models', icon: DatabaseOutlined },
-  { to: '/cookies', icon: KeyOutlined }
+  { to: '/cookies', icon: KeyOutlined },
+  { to: '/models', icon: DatabaseOutlined }
 ]
 
 // 动态导航项
@@ -156,11 +156,6 @@ const isElectron = typeof window !== 'undefined' && !!window.electronAPI
   z-index: 10000;
   user-select: none;
 }
-/* .window-title {
-  font-size: 16px;
-  padding-left: 16px;
-  font-weight: bold;
-} */
 .window-controls-fixed {
   display: flex;
   align-items: center;

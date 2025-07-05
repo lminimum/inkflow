@@ -35,7 +35,7 @@ const router = createRouter({
       path: '/html-to-image',
       name: 'html-to-image',
       component: HtmlToImageTool,
-      meta: { title: '图文生成工具' }
+      meta: { title: '图片生成工具' }
     },
     {
       path: '/material-library',

@@ -28,9 +28,9 @@
         <BuildOutlined />
         <h3 style="color: #333">图文生成</h3>
       </div>
-      <div class="nav-card card-color-3" @click="router.push('/data-analysis')">
-        <BarChartOutlined />
-        <h3 style="color: #333">数据分析</h3>
+      <div class="nav-card card-color-3" @click="router.push('/cookies')">
+        <KeyOutlined />
+        <h3 style="color: #333">账号管理</h3>
       </div>
       <div class="nav-card card-color-4" @click="router.push('/material')">
         <DatabaseOutlined />
@@ -128,7 +128,7 @@ const router = useRouter()
 import {
   EditOutlined,
   BuildOutlined,
-  BarChartOutlined,
+  KeyOutlined,
   DatabaseOutlined,
   SettingOutlined,
   QuestionCircleOutlined

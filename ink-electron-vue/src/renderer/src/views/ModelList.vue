@@ -2,11 +2,11 @@
   <div class="model-list-container">
     <div v-if="loading" class="loading">加载中...</div>
     <div v-if="error" class="error">{{ error }}</div>
-    <div class="model-grid" v-else>
+    <div v-else class="model-grid">
       <div v-for="serviceGroup in models" :key="serviceGroup.service" class="service-section">
         <h2>{{ serviceGroup.service }}</h2>
         <div class="model-grid">
-          <div class="model-card" v-for="model in serviceGroup.models" :key="model">
+          <div v-for="model in serviceGroup.models" :key="model" class="model-card">
             <h3>{{ model }}</h3>
           </div>
         </div>
