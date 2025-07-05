@@ -2,6 +2,27 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { spawn, ChildProcess } from 'child_process'
+import path from 'path'
+
+let backendProcess: ChildProcess | null = null
+
+function getBackendPath(): string | null {
+  const isDev = is.dev
+  if (isDev) {
+    // In development, we might run the backend manually or not at all.
+    // Returning null will prevent the app from trying to start it.
+    return null
+  }
+
+  // In production, the executable is packaged into the app's resources.
+  // Note the '.exe' extension for Windows. Adjust for other platforms if needed.
+  const platform = process.platform
+  const extension = platform === 'win32' ? '.exe' : ''
+
+  // The 'to' field in extraResources in electron-builder.yml is 'backend'
+  return path.join(process.resourcesPath, 'backend', `ink-backend${extension}`)
+}
 
 function createWindow(): void {
   // Create the browser window.
@@ -40,6 +61,24 @@ function createWindow(): void {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
+  // Start the backend process
+  const backendPath = getBackendPath()
+  if (backendPath) {
+    console.log(`Starting backend from: ${backendPath}`)
+    backendProcess = spawn(backendPath, [], {
+      stdio: 'ignore', // You can change this to 'inherit' to see backend logs
+      detached: false
+    })
+
+    backendProcess.on('error', (err) => {
+      console.error('Failed to start backend process:', err)
+    })
+
+    backendProcess.on('close', (code) => {
+      console.log(`Backend process exited with code ${code}`)
+    })
+  }
+
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
@@ -89,6 +128,14 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
+  }
+})
+
+app.on('will-quit', () => {
+  if (backendProcess) {
+    console.log('Killing backend process...')
+    backendProcess.kill()
+    backendProcess = null
   }
 })
 

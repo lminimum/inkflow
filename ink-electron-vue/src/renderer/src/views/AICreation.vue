@@ -13,9 +13,9 @@
           </div>
         </div>
         <div
-          class="display-content markdown-content"
           v-if="generatedContent"
-          v-html="generatedContent"
+          class="display-content markdown-content"
+          v-html="parseMarkdown(generatedContent)"
         ></div>
         <p v-else class="empty-hint">AI生成的内容将显示在这里...</p>
       </div>
@@ -41,16 +41,16 @@
         </div>
         <div class="chat-messages">
           <div
-            :class="['message', msg.role === 'user' ? 'user-message' : 'ai-message']"
             v-for="(msg, index) in messages"
             :key="index"
+            :class="['message', msg.role === 'user' ? 'user-message' : 'ai-message']"
           >
             <div class="message-avatar">
               <component :is="msg.role === 'user' ? UserOutlined : RobotOutlined" />
             </div>
             <div class="message-content markdown-content" v-html="parseMarkdown(msg.content)"></div>
           </div>
-          <div class="typing-indicator" v-if="isGenerating">
+          <div v-if="isGenerating" class="typing-indicator">
             <div class="dot"></div>
             <div class="dot"></div>
             <div class="dot"></div>
@@ -64,8 +64,8 @@
           ></textarea>
           <button
             class="send-btn"
-            @click="handleGenerate"
             :disabled="!userInput.trim() || isGenerating"
+            @click="handleGenerate"
           >
             <SendOutlined />
           </button>
@@ -81,11 +81,11 @@ import { useModelsStore } from '../store/modelsStore'
 import type { Message } from '../types'
 import { generateContent } from '../api/generate'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import {
   UserOutlined,
   RobotOutlined,
   SendOutlined,
-  SaveOutlined,
   ExportOutlined,
   CopyOutlined,
   EditOutlined,
@@ -93,8 +93,9 @@ import {
 } from '@ant-design/icons-vue'
 
 // Markdown解析函数
-const parseMarkdown = (content: string) => {
-  return marked.parse(content)
+const parseMarkdown = (content: string): string => {
+  const rawHtml = marked.parse(content) as string
+  return DOMPurify.sanitize(rawHtml)
 }
 
 // 生成内容状态
@@ -124,7 +125,7 @@ const messages = ref<Message[]>([
 ])
 const userInput = ref('')
 
-const handleGenerate = async () => {
+const handleGenerate = async (): Promise<void> => {
   if (!userInput.value.trim()) return
 
   // 添加用户消息
@@ -144,7 +145,7 @@ const handleGenerate = async () => {
       provider
     )
     // 使用marked解析Markdown内容
-    generatedContent.value = await marked.parse(response.content)
+    generatedContent.value = parseMarkdown(response.content)
     if (response.content) {
       messages.value.push({ role: 'assistant', content: response.content })
     }
@@ -161,14 +162,14 @@ const handleGenerate = async () => {
 }
 
 // 复制内容到剪贴板
-const copyContent = () => {
+const copyContent = (): void => {
   if (!generatedContent.value) return
   navigator.clipboard.writeText(generatedContent.value)
   alert('内容已复制到剪贴板')
 }
 
 // 清空对话
-const clearChat = () => {
+const clearChat = (): void => {
   messages.value = [
     {
       role: 'assistant',
@@ -179,7 +180,7 @@ const clearChat = () => {
 }
 
 // 编辑内容
-const editContent = () => {
+const editContent = (): void => {
   // 可以在这里实现编辑功能
   alert('编辑功能待实现')
 }
