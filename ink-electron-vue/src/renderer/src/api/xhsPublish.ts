@@ -31,7 +31,7 @@ export const publishToXHS = async (params: XHSPublishParams): Promise<XHSPublish
       'success' in responseData &&
       typeof (responseData as { success: unknown }).success === 'boolean'
     ) {
-      return responseData as XHSPublishResponse
+      return responseData as unknown as XHSPublishResponse
     } else {
       throw new Error('后端返回格式不正确')
     }
