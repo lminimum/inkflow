@@ -16,3 +16,17 @@ apscheduler>=3.10.0
 pytest>=7.4.0
 pytest-asyncio>=0.21.0
 black>=23.0.0 
+
+uvicorn[standard]
+langchain
+python-dotenv
+openai
+langchain-ollama
+pytest
+langchain_community
+langchain_openai
+deepseek
+schedule
+Markdown
+beautifulsoup4
+readability-lxml

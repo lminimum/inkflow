@@ -12,18 +12,16 @@ import logging
 from pathlib import Path
 from typing import Dict, Any
 
-# 将xhs-toolkit-main添加到系统路径中，以便导入其模块
-XHS_TOOLKIT_PATH = Path(__file__).resolve().parent.parent.parent.parent / "xhs-toolkit-main"
-if str(XHS_TOOLKIT_PATH) not in sys.path:
-    sys.path.insert(0, str(XHS_TOOLKIT_PATH))
+# 将xhs-toolkit-main添加到系统路径中的代码已被移到主程序入口 main.py
 
 try:
-    from src.core.config import XHSConfig
-    from src.auth.cookie_manager import CookieManager
-    from src.core.exceptions import AuthenticationError
+    # 明确指定从 xhs_toolkit_main 包中导入
+    from xhs_toolkit_main.src.core.config import XHSConfig
+    from xhs_toolkit_main.src.auth.cookie_manager import CookieManager
+    from xhs_toolkit_main.src.core.exceptions import AuthenticationError
 except ImportError as e:
     raise ImportError(
-        "无法从xhs-toolkit-main导入模块。请确保xhs-toolkit-main目录与ink-backend在同一级。"
+        "无法从xhs-toolkit-main导入模块。请确保xhs-toolkit-main目录与ink-backend在同一级，并检查main.py中的路径设置。"
     ) from e
 
 

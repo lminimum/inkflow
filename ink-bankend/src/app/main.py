@@ -1,5 +1,19 @@
 import sys
+from pathlib import Path
 import asyncio
+
+# --- 路径修复: 将 xhs-toolkit-main 添加到 sys.path ---
+# 通过定位当前文件，稳定地找到项目根目录(inkflow)，然后定位到 xhs-toolkit-main
+# 这是为了确保无论从哪里启动服务，都能正确找到模块。
+try:
+    PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+    XHS_TOOLKIT_PATH = PROJECT_ROOT / "xhs-toolkit-main"
+    if XHS_TOOLKIT_PATH.exists() and str(XHS_TOOLKIT_PATH) not in sys.path:
+        sys.path.insert(0, str(XHS_TOOLKIT_PATH))
+except Exception as e:
+    # 如果路径计算出错，提供一个清晰的错误提示
+    print(f"FATAL: 路径设置失败，无法找到 xhs-toolkit-main 目录: {e}", file=sys.stderr)
+    sys.exit(1)
 
 if sys.platform.startswith('win'):
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())

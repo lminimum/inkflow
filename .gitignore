@@ -41,3 +41,4 @@ htmlcov/
 *.sln
 *.sw?
 *.pyc
+*.zip
