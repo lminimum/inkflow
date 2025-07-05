@@ -40,8 +40,8 @@ export const useHotspotStore = defineStore('hotspots', {
   },
 
   actions: {
-    async fetchHotspots() {
-      if (this.fetched || this.loading) {
+    async fetchHotspots(forceRefresh: boolean = false) {
+      if ((this.fetched && !forceRefresh) || this.loading) {
         return // 如果已经获取过或正在获取，则不执行
       }
 

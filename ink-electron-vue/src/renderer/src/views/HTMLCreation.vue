@@ -73,8 +73,8 @@
                   class="toggle-container"
                   title="问题模式将直接使用主题作为问题内容生成图片，不添加额外内容"
                 >
-                  <input type="checkbox" id="question-mode" v-model="formData.isQuestion" />
-                  <span class="tooltip-icon">ⓘ</span>
+                  <input id="question-mode" v-model="formData.isQuestion" type="checkbox" />
+                  <InfoCircleOutlined class="tooltip-icon" />
                 </div>
               </div>
             </div>
@@ -206,7 +206,7 @@
           <h2 class="editor-title">编辑发布信息</h2>
 
           <div class="form-group">
-            <label for="preview-theme"> <span class="label-icon">📝</span>标题 </label>
+            <label for="preview-theme"> <EditOutlined class="icon-margin" />标题 </label>
             <input
               id="preview-theme"
               v-model="formData.theme"
@@ -217,7 +217,9 @@
           </div>
 
           <div class="form-group">
-            <label for="preview-description"> <span class="label-icon">📄</span>内容描述 </label>
+            <label for="preview-description">
+              <FileTextOutlined class="icon-margin" />内容描述
+            </label>
             <textarea
               id="preview-description"
               v-model="editableDescription"
@@ -229,7 +231,7 @@
           </div>
 
           <div class="form-group">
-            <label for="preview-topics"> <span class="label-icon">#️⃣</span>话题标签 </label>
+            <label for="preview-topics"> <NumberOutlined class="icon-margin" />话题标签 </label>
             <div class="tags-input-container">
               <input
                 id="preview-topics"
@@ -238,7 +240,7 @@
                 placeholder="用逗号分隔多个标签，如：种草,分享,日常"
                 class="form-input"
               />
-              <div class="tags-preview" v-if="parsedTags.length > 0">
+              <div v-if="parsedTags.length > 0" class="tags-preview">
                 <span v-for="(tag, index) in parsedTags" :key="index" class="tag-pill">
                   #{{ tag }}
                 </span>
@@ -252,7 +254,7 @@
             :disabled="isPublishing"
             @click="handleAutoPublish"
           >
-            <span class="btn-icon">🚀</span>
+            <RocketOutlined class="btn-icon" />
             {{ isPublishing ? '发布中...' : '一键发布到小红书' }}
           </button>
 
@@ -260,7 +262,8 @@
             v-if="publishMessage"
             :class="['publish-message', publishSuccess ? 'success' : 'error']"
           >
-            <span class="message-icon">{{ publishSuccess ? '✅' : '❌' }}</span>
+            <CheckCircleOutlined v-if="publishSuccess" class="message-icon" />
+            <CloseCircleOutlined v-else class="message-icon" />
             {{ publishMessage }}
           </div>
         </div>
@@ -291,6 +294,16 @@ import { htmlToImage, type HtmlToImageParams } from '../api/htmlToImage'
 import { analyzeHotspots } from '../api/hotspot'
 import { publishToXHS } from '../api/xhsPublish'
 import type { FormData } from '../store/htmlStore'
+// 导入Ant Design Vue图标
+import {
+  EditOutlined,
+  FileTextOutlined,
+  NumberOutlined,
+  RocketOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  InfoCircleOutlined
+} from '@ant-design/icons-vue'
 
 // 表单数据
 const formData = ref<FormData>({
@@ -1446,18 +1459,10 @@ const handleModelChange = (model: string): void => {
 
 .tooltip-icon {
   margin-left: 0.5rem;
-  font-size: 0.8rem;
+  font-size: 16px;
   color: var(--text-secondary);
   cursor: help;
-  border: 1px solid var(--border-color);
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   position: relative;
-  top: 0;
 }
 
 .toggle-container:hover:after {
@@ -1475,5 +1480,21 @@ const handleModelChange = (model: string): void => {
   color: var(--text-secondary);
   margin-top: 5px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.icon-margin {
+  margin-right: 8px;
+  font-size: 16px;
+  vertical-align: middle;
+}
+
+.btn-icon {
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+.message-icon {
+  margin-right: 8px;
+  font-size: 16px;
 }
 </style>

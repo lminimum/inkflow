@@ -1,6 +1,5 @@
 <template>
   <div class="model-list-container">
-    <h1>可用AI模型列表</h1>
     <div v-if="loading" class="loading">加载中...</div>
     <div v-if="error" class="error">{{ error }}</div>
     <div class="model-grid" v-else>

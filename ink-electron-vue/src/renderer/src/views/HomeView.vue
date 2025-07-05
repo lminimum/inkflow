@@ -86,7 +86,7 @@
                 <span class="realtime-rank">{{ i + 1 }}</span>
                 <div class="realtime-content">
                   <h3 class="realtime-title">{{ article.title }}</h3>
-                  <p class="realtime-views" v-if="article.hot_score">
+                  <p v-if="article.hot_score" class="realtime-views">
                     热度: {{ article.hot_score }}
                   </p>
                 </div>

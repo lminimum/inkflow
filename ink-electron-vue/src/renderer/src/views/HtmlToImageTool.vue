@@ -3,7 +3,7 @@
     <div class="main-content">
       <div class="display-section">
         <div class="display-header">
-          <h2>HTML转图片工具</h2>
+          <h2>图片预览</h2>
           <div class="display-actions">
             <button class="action-btn" :disabled="loading" @click="handleConvert">
               {{ loading ? '生成中...' : '生成图片' }}

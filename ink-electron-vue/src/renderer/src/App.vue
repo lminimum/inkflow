@@ -45,7 +45,7 @@ import {
   DatabaseOutlined,
   BuildOutlined,
   MinusOutlined,
-  BorderOutlined,
+  FileImageOutlined,
   CloseOutlined,
   BookOutlined
 } from '@ant-design/icons-vue'
@@ -99,7 +99,7 @@ const homeNavItems = [
 ]
 
 const toolsNavItems = [
-  { to: '/html-to-image', icon: BorderOutlined },
+  { to: '/html-to-image', icon: FileImageOutlined },
   { to: '/material-library', icon: BookOutlined }
 ]
 
