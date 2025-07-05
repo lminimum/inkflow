@@ -47,7 +47,8 @@ import {
   MinusOutlined,
   FileImageOutlined,
   CloseOutlined,
-  BookOutlined
+  BookOutlined,
+  KeyOutlined
 } from '@ant-design/icons-vue'
 import ThemeSettings from '@renderer/components/ThemeSettings.vue'
 
@@ -103,7 +104,10 @@ const toolsNavItems = [
   { to: '/material-library', icon: BookOutlined }
 ]
 
-const settingsNavItems = [{ to: '/models', icon: DatabaseOutlined }]
+const settingsNavItems = [
+  { to: '/models', icon: DatabaseOutlined },
+  { to: '/cookies', icon: KeyOutlined }
+]
 
 // 动态导航项
 const topNavItems = computed(() => {
@@ -124,7 +128,7 @@ const handleNavClick = (item: { to?: string; handler?: () => void }): void => {
       activeTab.value = 'home'
     } else if (item.to === '/html-to-image' || item.to === '/material-library') {
       activeTab.value = 'tools'
-    } else if (item.to === '/models') {
+    } else if (item.to === '/models' || item.to === '/cookies') {
       activeTab.value = 'settings'
     }
   }

@@ -1,47 +1,55 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import ModelList from '../views/ModelList.vue'
+import HtmlToImageTool from '../views/HtmlToImageTool.vue'
+import MaterialLibrary from '../views/MaterialLibrary.vue'
+import CookieManager from '../views/CookieManager.vue'
 
-export default createRouter({
+const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
       name: 'home',
-      component: () => import('@renderer/views/HomeView.vue'),
+      component: () => import('../views/HomeView.vue'),
       meta: { title: '主页' }
     },
     {
-      path: '/ai-creation',
-      component: () => import('@renderer/views/AICreation.vue'),
-      meta: { title: 'AI创作' }
-    },
-    {
-      path: '/html-creation',
-      component: () => import('@renderer/views/HTMLCreation.vue'),
-      meta: { title: '图文生成' }
-    },
-    {
-      path: '/add',
-      component: () => import('@renderer/views/AddView.vue'),
-      meta: { title: '添加' }
-    },
-    {
       path: '/models',
-      name: 'ModelList',
+      name: 'models',
       component: ModelList,
       meta: { title: '模型列表' }
     },
     {
+      path: '/ai-creation',
+      name: 'ai-creation',
+      component: () => import('../views/AICreation.vue'),
+      meta: { title: 'AI创作' }
+    },
+    {
+      path: '/html-creation',
+      name: 'html-creation',
+      component: () => import('../views/HTMLCreation.vue'),
+      meta: { title: 'HTML生成' }
+    },
+    {
       path: '/html-to-image',
-      name: 'HtmlToImageTool',
-      component: () => import('@renderer/views/HtmlToImageTool.vue'),
-      meta: { title: 'HTML转图片' }
+      name: 'html-to-image',
+      component: HtmlToImageTool,
+      meta: { title: '图文生成工具' }
     },
     {
       path: '/material-library',
-      name: 'MaterialLibrary',
-      component: () => import('@renderer/views/MaterialLibrary.vue'),
-      meta: { title: '素材库' }
+      name: 'material-library',
+      component: MaterialLibrary,
+      meta: { title: '热点素材库' }
+    },
+    {
+      path: '/cookies',
+      name: 'cookies',
+      component: CookieManager,
+      meta: { title: '账号管理' }
     }
   ]
 })
+
+export default router

@@ -28,6 +28,7 @@ import concurrent.futures
 from src.services.screenshot_sync import take_screenshot
 from typing import Optional, List
 from src.services.xhs_publisher import XHSPublisher
+from src.services.cookie_service import CookieService
 
 # 加载环境变量
 load_dotenv()
@@ -82,6 +83,9 @@ IMAGE_OUTPUT_DIR = os.path.join(OUTPUT_DIR, 'image_outputs')
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(HTML_OUTPUT_DIR, exist_ok=True)
 os.makedirs(IMAGE_OUTPUT_DIR, exist_ok=True)
+
+# 实例化Cookie服务
+cookie_service = CookieService()
 
 # 挂载静态文件目录
 app.mount("/static", StaticFiles(directory=OUTPUT_DIR), name="static")
@@ -153,6 +157,10 @@ class XHSPublishRequest(BaseModel):
     location: Optional[str] = None
     images: Optional[List[str]] = None
     videos: Optional[List[str]] = None
+
+# Cookie管理请求模型
+class CookieAccountRequest(BaseModel):
+    account_name: str = Field(..., min_length=1, description="账号名称不能为空")
 
 @app.get("/")
 async def read_root():
@@ -301,11 +309,11 @@ async def generate_html_section(request: SectionHTMLRequest):
                 )
             else:
                 section_html = await html_builder.generate_image_html(
-                    title=request.title,
-                    description=request.description,
+                title=request.title,
+                description=request.description,
                     style=request.style,
                     css_style=request.css_style or ""
-                )
+            )
         # 保存到输出目录
         section_id = uuid.uuid4().hex
         html_filename = f'section_{section_id}.html'
@@ -450,6 +458,68 @@ async def get_hotspot_content(request: HotspotContentRequest):
     except Exception as e:
         logger.error(f"获取热点内容失败: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"获取热点内容失败: {str(e)}")
+
+@app.get("/api/cookies/accounts")
+async def list_cookie_accounts():
+    """获取所有已保存的Cookie账号列表"""
+    try:
+        accounts = cookie_service.list_accounts()
+        return {"success": True, "accounts": accounts}
+    except Exception as e:
+        logger.error(f"列出Cookie账号时出错: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"无法获取账号列表: {e}")
+
+@app.post("/api/cookies/add")
+async def add_cookie_account(request: CookieAccountRequest, background_tasks: BackgroundTasks):
+    """添加一个新的Cookie账号（启动浏览器进行登录）"""
+    # 使用后台任务来运行阻塞的浏览器操作，避免API超时
+    background_tasks.add_task(cookie_service.add_account, request.account_name)
+    return {
+        "success": True, 
+        "message": f"已启动为账号 '{request.account_name}' 添加Cookie的后台任务。请在弹出的浏览器窗口中完成登录。"
+    }
+
+@app.post("/api/cookies/delete")
+async def delete_cookie_account(request: CookieAccountRequest):
+    """删除一个指定的Cookie账号"""
+    try:
+        result = cookie_service.delete_account(request.account_name)
+        return result
+    except Exception as e:
+        logger.error(f"删除Cookie账号 '{request.account_name}' 时出错: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"删除账号时出错: {e}")
+
+@app.post("/api/cookies/validate")
+async def validate_cookie_account(request: CookieAccountRequest):
+    """验证指定Cookie账号的有效性"""
+    try:
+        result = cookie_service.validate_account(request.account_name)
+        return result
+    except Exception as e:
+        logger.error(f"验证Cookie账号 '{request.account_name}' 时出错: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"验证账号时出错: {e}")
+
+@app.post("/api/cookies/set_active")
+async def set_active_cookie_account(request: CookieAccountRequest):
+    """设置当前活动的Cookie账号"""
+    try:
+        result = cookie_service.set_active_account(request.account_name)
+        if not result.get("success"):
+            raise HTTPException(status_code=404, detail=result.get("message"))
+        return result
+    except Exception as e:
+        logger.error(f"设置活动Cookie账号 '{request.account_name}' 时出错: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"设置活动账号时出错: {e}")
+
+@app.get("/api/cookies/get_active")
+async def get_active_cookie_account():
+    """获取当前活动的Cookie账号"""
+    try:
+        active_account = cookie_service.get_active_account()
+        return {"success": True, "active_account": active_account}
+    except Exception as e:
+        logger.error(f"获取活动Cookie账号时出错: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"获取活动账号时出错: {e}")
 
 @app.post("/api/publish/xhs")
 async def publish_to_xiaohongshu(request: XHSPublishRequest):
