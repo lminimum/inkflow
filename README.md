@@ -41,37 +41,64 @@ inkflow/
 ## 快速开始
 ### 环境要求
 - Node.js 16+
-- Python 3.8+
-- pip 21+
-- npm 7+
+- Python 3.8+ & pip
+- (推荐) 已配置好系统环境变量的 Chrome 浏览器
 
-### 安装步骤
-#### 1. 克隆仓库
+### 安装与启动
+
+#### 方式一：一键启动 (Windows - 推荐)
+本项目提供了一个便捷的一键启动脚本 `start.bat`，它会自动完成所有环境配置、依赖安装和服务启动的步骤。
+
+1.  **克隆仓库**
+    ```bash
+    git clone https://github.com/yourusername/inkflow.git
+    cd inkflow
+    ```
+
+2.  **运行启动脚本**
+    直接双击项目根目录下的 `start.bat` 文件。
+
+    脚本将自动执行以下操作：
+    - 安装 Python 后端依赖 (`requirements.txt`)。
+    - 安装 Node.js 前端依赖 (`package.json`)。
+    - 在新窗口中分别启动后端和前端服务。
+
+#### 方式二：手动分步启动
+
+**1. 克隆仓库**
 ```bash
 git clone https://github.com/yourusername/inkflow.git
 cd inkflow
 ```
 
-#### 2. 后端设置
+**2. 安装后端依赖**
 ```bash
 cd ink-backend
 pip install -r requirements.txt
-# 配置环境变量
-cp .env.example .env
-# 编辑 .env 文件添加必要的 API 密钥
+cd ..
 ```
 
-#### 3. 桌面端（Electron+Vue）设置
+**3. 安装前端依赖**
 ```bash
-cd ../ink-electron-vue
+cd ink-electron-vue
 npm install
-# 配置环境变量（如需）
-cp .env.example .env
-# 编辑 .env 文件设置后端 API 地址
+cd ..
 ```
+
+**4. 启动服务**
+你需要打开两个终端窗口：
+
+- **终端 1: 启动后端**
+  ```bash
+  node start-backend.js
+  ```
+- **终端 2: 启动前端**
+  ```bash
+  node start-frontend.js
+  ```
 
 ### 配置 AI 服务
-修改 `ink-backend/ai_services.json` 配置文件，添加或调整 AI 服务提供商：
+修改 `ink-backend/src/config/ai_services.json` 配置文件，添加或调整 AI 服务提供商：
 ```json
 {
   "services": [
@@ -86,25 +113,7 @@ cp .env.example .env
   ]
 }
 ```
-
-### 启动服务
-#### 后端服务
-```bash
-cd ink-backend
-python src/app/main.py
-# 或使用启动脚本
-node ../start-backend.js
-```
-
-#### 桌面端（Electron+Vue）
-```bash
-cd ink-electron-vue
-npm run dev # 开发模式
-# 或
-npm run build && npm run start # 生产模式
-# 或使用启动脚本
-node ../start-frontend.js
-```
+> **注意**: 配置文件路径可能为 `ink-backend/config.json` 或 `ink-backend/src/config/ai_services.json`，请根据实际情况调整。
 
 ## 测试
 运行后端单元测试：
