@@ -616,7 +616,7 @@ const generatePreview = async (): Promise<void> => {
       // 调用HTML转图片接口
       const params: HtmlToImageParams = {
         html_path: htmlPath,
-        width: 800
+        width: 900
       }
 
       console.log('发送HTML转图片请求，路径:', htmlPath)

@@ -31,7 +31,7 @@ inkflow/
 │   ├── package.json        # 前端依赖
 │   └── ...
 ├── start-backend.js        # 后端启动脚本
-├── start-frontend.js       # 前端启动脚本（如需）
+├── start-frontend.js       # 前端启动脚本
 └── README.md
 ```
 
@@ -99,6 +99,8 @@ cd ink-electron-vue
 npm run dev # 开发模式
 # 或
 npm run build && npm run start # 生产模式
+# 或使用启动脚本
+node ../start-frontend.js
 ```
 
 ## 测试
